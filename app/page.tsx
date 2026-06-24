@@ -37,27 +37,38 @@ export default async function HomePage() {
       : Promise.resolve([]),
   ]);
 
-  // 각 부원의 가장 최근 포스트 statusMessage 추출
-  let postStatusMap: Record<string, string> = {};
+  // 각 부원의 가장 최근 포스트 → statusMessage + 이동 링크 정보 추출
+  const postStatusMap: Record<string, string> = {};
+  const postLinkMap: Record<string, { category: string; projectId?: string }> = {};
+
   if (recentAuthorIds.length > 0) {
-    const recentWithMsg = await Post.find({
+    const recentPostsData = await Post.find({
       authorId: { $in: recentAuthorIds },
       createdAt: { $gte: oneDayAgo },
-      postStatusMessage: { $exists: true, $ne: "" },
     })
       .sort({ createdAt: -1 })
-      .select("authorId postStatusMessage")
+      .select("authorId postStatusMessage category projectId")
       .lean();
 
-    for (const p of recentWithMsg) {
+    for (const p of recentPostsData) {
       const key = (p.authorId as any).toString();
-      if (!postStatusMap[key]) postStatusMap[key] = p.postStatusMessage as string;
+      if (!postLinkMap[key]) {
+        postLinkMap[key] = {
+          category: p.category as string,
+          projectId: (p.projectId as any)?.toString(),
+        };
+      }
+      if (!postStatusMap[key] && (p as any).postStatusMessage) {
+        postStatusMap[key] = (p as any).postStatusMessage as string;
+      }
     }
   }
 
   const membersWithPostStatus = (members as any[]).map((m) => ({
     ...m,
     postStatusMessage: postStatusMap[m._id.toString()] ?? null,
+    recentPostCategory: postLinkMap[m._id.toString()]?.category ?? null,
+    recentPostProjectId: postLinkMap[m._id.toString()]?.projectId ?? null,
   }));
 
   return (

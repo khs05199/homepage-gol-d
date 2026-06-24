@@ -5,53 +5,66 @@ import Link from "next/link";
 
 const STORY_ROW_LIMIT = 8;
 
+// ── 스토리 이동 링크 계산 ──────────────────────────────────────────
+function getStoryHref(member: any): string {
+  if (member.recentPostCategory === "프로젝트" && member.recentPostProjectId) {
+    return `/projects/${member.recentPostProjectId}`;
+  }
+  if (member.recentPostCategory === "공지") {
+    return "/schedule";
+  }
+  return `/profile/${member.portfolioSlug ?? member.username}`;
+}
+
 // ── 멤버 스토리 직사각형 ──────────────────────────────────────────
 function StoryCard({ member }: { member: any }) {
   const displayId = member.username ?? member.portfolioSlug ?? member.name ?? "?";
   const initials = displayId.split(".")[0].toUpperCase().slice(0, 2);
   const bubbleText = member.postStatusMessage ?? member.statusMessage;
+  const href = getStoryHref(member);
 
   return (
-    <Link href={`/profile/${member.portfolioSlug ?? member.username}`} className="group flex flex-col items-center gap-1 shrink-0">
-      <div className="relative">
-        {/* 말풍선 — hover 시 표시 */}
-        {bubbleText && (
-          <div
-            className="absolute -top-8 left-1/2 -translate-x-1/2 text-white text-[9px] font-semibold px-2 py-1 rounded-md whitespace-nowrap max-w-[90px] truncate z-10
-                       opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-            style={{ background: "#1A5A96" }}
-          >
-            {bubbleText}
-            <span
-              className="absolute -bottom-[5px] left-1/2 -translate-x-1/2 block w-0 h-0"
-              style={{
-                borderLeft: "4px solid transparent",
-                borderRight: "4px solid transparent",
-                borderTop: "5px solid #1A5A96",
-              }}
-            />
-          </div>
+    <Link href={href} className="group relative flex flex-col items-center gap-1 shrink-0">
+      {/* 아바타 — 직사각형 */}
+      <div
+        className="w-11 h-14 rounded-xl border-2 border-gray-900 overflow-hidden flex items-center justify-center cursor-pointer group-hover:scale-105 transition-transform"
+        style={{ background: "radial-gradient(circle at 30% 30%, #FFD700, #D4A700)" }}
+      >
+        {member.avatar ? (
+          <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
+        ) : (
+          <span className="text-gray-900 font-black text-[10px] leading-none tracking-tight">
+            {initials}
+          </span>
         )}
-
-        {/* 아바타 — 직사각형 */}
-        <div
-          className="w-11 h-14 rounded-xl border-2 border-gray-900 overflow-hidden flex items-center justify-center cursor-pointer group-hover:scale-105 transition-transform"
-          style={{ background: "radial-gradient(circle at 30% 30%, #FFD700, #D4A700)" }}
-        >
-          {member.avatar ? (
-            <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
-          ) : (
-            <span className="text-gray-900 font-black text-[10px] leading-none tracking-tight">
-              {initials}
-            </span>
-          )}
-        </div>
       </div>
 
       {/* 아이디 */}
       <span className="text-[9px] text-gray-700 font-medium max-w-[48px] truncate text-center leading-tight">
         {displayId}
       </span>
+
+      {/* 말풍선 — 아이디 아래에 표시, 검정 배경 금색 글자 */}
+      {bubbleText && (
+        <div
+          className="absolute top-full mt-1 left-1/2 -translate-x-1/2
+                     text-[9px] font-semibold px-2 py-1 rounded-md
+                     whitespace-nowrap max-w-[100px] truncate z-20
+                     opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+          style={{ background: "#1A1A1A", color: "#FFD700" }}
+        >
+          {/* 위쪽 꼭지 */}
+          <span
+            className="absolute -top-[5px] left-1/2 -translate-x-1/2 block w-0 h-0"
+            style={{
+              borderLeft: "4px solid transparent",
+              borderRight: "4px solid transparent",
+              borderBottom: "5px solid #1A1A1A",
+            }}
+          />
+          {bubbleText}
+        </div>
+      )}
     </Link>
   );
 }

@@ -3,14 +3,11 @@ import { getServerSession } from "next-auth";
 import { connectDB } from "@/lib/mongodb";
 import Post from "@/models/Post";
 import { authOptions } from "@/lib/auth";
-
-function isLeadership(session: any) {
-  return session && ["회장", "부회장"].includes(session.user?.role);
-}
+import { isLeadership } from "@/lib/roles";
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
-  if (!isLeadership(session)) {
+  if (!isLeadership((session?.user as any)?.role)) {
     return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
   }
 
@@ -27,7 +24,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
 export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
-  if (!isLeadership(session)) {
+  if (!isLeadership((session?.user as any)?.role)) {
     return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
   }
 
