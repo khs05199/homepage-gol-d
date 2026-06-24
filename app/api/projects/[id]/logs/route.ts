@@ -29,14 +29,18 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: "본인 프로젝트에만 로그를 추가할 수 있습니다." }, { status: 403 });
   }
 
-  const { title, content, imageUrl, attachments } = await req.json();
+  const { title, content, imageUrl, attachments, postStatusMessage } = await req.json();
   if (!title || !content) {
     return NextResponse.json({ error: "제목과 내용은 필수입니다." }, { status: 400 });
+  }
+  if (!postStatusMessage?.trim()) {
+    return NextResponse.json({ error: "상태 메세지는 필수입니다." }, { status: 400 });
   }
 
   const log = await Post.create({
     title,
     content,
+    postStatusMessage: postStatusMessage.slice(0, 15),
     imageUrl: imageUrl ?? undefined,
     attachments: attachments ?? [],
     category: "프로젝트",

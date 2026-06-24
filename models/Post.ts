@@ -13,6 +13,7 @@ const PostSchema = new Schema({
     required: true,
   },
   content: { type: String, required: true },
+  postStatusMessage: { type: String, default: "", maxlength: 15 },
   imageUrl: { type: String },
   attachments: [{
     name: { type: String },

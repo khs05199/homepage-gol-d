@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   const passwordHash = await bcrypt.hash(password, 10);
   const slug = email.split("@")[0] + "-" + Date.now();
 
-  const validRoles = ["회장", "부회장", "부원"];
+  const validRoles = ["회장", "부회장", "관리자", "서기", "동아리 전담 멘토", "부원"];
   const user = await User.create({
     name,
     email,

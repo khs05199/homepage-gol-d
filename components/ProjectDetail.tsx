@@ -72,6 +72,7 @@ export default function ProjectDetail({ project, logs, comments, currentUser }: 
   // ── 업데이트 로그
   const [logTitle, setLogTitle] = useState("");
   const [logContent, setLogContent] = useState("");
+  const [logStatusMsg, setLogStatusMsg] = useState("");
   const [logImage, setLogImage] = useState<string | null>(null);
   const [logAttachments, setLogAttachments] = useState<{ name: string; url: string; type: string }[]>([]);
   const [logLoading, setLogLoading] = useState(false);
@@ -132,6 +133,7 @@ export default function ProjectDetail({ project, logs, comments, currentUser }: 
       body: JSON.stringify({
         title: logTitle,
         content: logContent,
+        postStatusMessage: logStatusMsg,
         imageUrl: logImage ?? undefined,
         attachments: logAttachments,
       }),
@@ -142,6 +144,7 @@ export default function ProjectDetail({ project, logs, comments, currentUser }: 
       setLocalLogs([newLog, ...localLogs]);
       setLogTitle("");
       setLogContent("");
+      setLogStatusMsg("");
       setLogImage(null);
       setLogAttachments([]);
       router.refresh();
@@ -375,6 +378,18 @@ export default function ProjectDetail({ project, logs, comments, currentUser }: 
               rows={3}
               required
             />
+            <div className="relative">
+              <Input
+                value={logStatusMsg}
+                onChange={(e) => setLogStatusMsg(e.target.value.slice(0, 15))}
+                placeholder="상태 메세지 (스토리에 표시됩니다) *"
+                maxLength={15}
+                required
+              />
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">
+                {logStatusMsg.length}/15
+              </span>
+            </div>
 
             {/* 이미지 미리보기 */}
             {logImage && (

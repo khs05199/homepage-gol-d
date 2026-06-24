@@ -37,11 +37,34 @@ export default async function HomePage() {
       : Promise.resolve([]),
   ]);
 
+  // 각 부원의 가장 최근 포스트 statusMessage 추출
+  let postStatusMap: Record<string, string> = {};
+  if (recentAuthorIds.length > 0) {
+    const recentWithMsg = await Post.find({
+      authorId: { $in: recentAuthorIds },
+      createdAt: { $gte: oneDayAgo },
+      postStatusMessage: { $exists: true, $ne: "" },
+    })
+      .sort({ createdAt: -1 })
+      .select("authorId postStatusMessage")
+      .lean();
+
+    for (const p of recentWithMsg) {
+      const key = (p.authorId as any).toString();
+      if (!postStatusMap[key]) postStatusMap[key] = p.postStatusMessage as string;
+    }
+  }
+
+  const membersWithPostStatus = (members as any[]).map((m) => ({
+    ...m,
+    postStatusMessage: postStatusMap[m._id.toString()] ?? null,
+  }));
+
   return (
     <PageLayout>
       <HomeFeed
         posts={JSON.parse(JSON.stringify(posts))}
-        members={JSON.parse(JSON.stringify(members))}
+        members={JSON.parse(JSON.stringify(membersWithPostStatus))}
         session={JSON.parse(JSON.stringify(session))}
       />
     </PageLayout>

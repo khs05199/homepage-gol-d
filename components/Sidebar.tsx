@@ -32,7 +32,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const role = (session?.user as any)?.role;
-  const isLeader = ["회장", "부회장", "관리자"].includes(role);
+  const isLeader = ["회장", "부회장", "관리자", "서기", "동아리 전담 멘토"].includes(role);
 
   const [resourceHasNew, setResourceHasNew] = useState(false);
 
@@ -78,9 +78,11 @@ export default function Sidebar() {
         <p className="text-[10px] tracking-[0.2em] text-yellow-400/60 uppercase mb-2">
           AI • BIGDATA
         </p>
-        <h1 className="text-4xl font-black tracking-tight gold-text leading-none mb-5">
-          GOL:D
-        </h1>
+        <Link href="/">
+          <h1 className="text-4xl font-black tracking-tight gold-text leading-none mb-5 hover:opacity-80 transition-opacity cursor-pointer">
+            GOL:D
+          </h1>
+        </Link>
         <div className="space-y-2">
           {VALUES.map((v) => (
             <p key={v} className="text-xs text-yellow-300/60 flex items-center gap-2">
