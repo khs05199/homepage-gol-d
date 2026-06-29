@@ -41,11 +41,13 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 function NotificationToggle() {
+  const [mounted, setMounted] = useState(false);
   const [status, setStatus] = useState<"default" | "granted" | "denied">("default");
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
     setStatus(Notification.permission as "default" | "granted" | "denied");
     navigator.serviceWorker.ready.then((reg) =>
@@ -91,6 +93,7 @@ function NotificationToggle() {
     }
   }
 
+  if (!mounted) return null;
   if (!("Notification" in window) || status === "denied") return null;
 
   return (
