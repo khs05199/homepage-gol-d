@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Users, FolderOpen, ShieldCheck,
   Settings, BookOpen, Archive, CalendarDays, ClipboardList,
-  LogOut, KeyRound, FileText,
+  LogOut, KeyRound, FileText, Bell, BellOff,
 } from "lucide-react";
 
 const NAV_TOP = [
@@ -30,6 +30,84 @@ const NAV_BOTTOM = [
 ];
 
 const VALUES = ["동반성장", "소통과 공유", "도전 우선주의"];
+
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!;
+
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+}
+
+function NotificationToggle() {
+  const [status, setStatus] = useState<"default" | "granted" | "denied">("default");
+  const [subscribed, setSubscribed] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
+    setStatus(Notification.permission as "default" | "granted" | "denied");
+    navigator.serviceWorker.ready.then((reg) =>
+      reg.pushManager.getSubscription().then((sub) => setSubscribed(!!sub))
+    );
+  }, []);
+
+  async function toggleSubscription() {
+    if (!("serviceWorker" in navigator)) return;
+    setLoading(true);
+    try {
+      const reg = await navigator.serviceWorker.ready;
+
+      if (subscribed) {
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          await fetch("/api/push/subscribe", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ endpoint: sub.endpoint }),
+          });
+          await sub.unsubscribe();
+          setSubscribed(false);
+        }
+      } else {
+        const permission = await Notification.requestPermission();
+        setStatus(permission as "default" | "granted" | "denied");
+        if (permission !== "granted") return;
+
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        });
+        await fetch("/api/push/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ subscription: sub }),
+        });
+        setSubscribed(true);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (!("Notification" in window) || status === "denied") return null;
+
+  return (
+    <button
+      onClick={toggleSubscription}
+      disabled={loading}
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all w-full disabled:opacity-50 ${
+        subscribed
+          ? "text-yellow-300 hover:text-white hover:bg-white/5"
+          : "text-gray-400 hover:text-white hover:bg-white/5"
+      }`}
+    >
+      {subscribed ? <Bell size={16} className="text-yellow-400" /> : <BellOff size={16} />}
+      <span>{subscribed ? "알림 켜짐" : "알림 받기"}</span>
+    </button>
+  );
+}
 
 function NavLink({
   href,
@@ -189,6 +267,8 @@ export default function Sidebar() {
           <KeyRound size={16} className={pathname === "/me/account" ? "text-yellow-400" : ""} />
           <span>아이디 · 비밀번호 변경</span>
         </Link>
+
+        <NotificationToggle />
 
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}

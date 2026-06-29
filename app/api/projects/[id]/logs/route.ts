@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/mongodb";
 import Project from "@/models/Project";
 import Post from "@/models/Post";
 import { authOptions } from "@/lib/auth";
+import { sendPushToAll } from "@/lib/sendPush";
 
 export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
   await connectDB();
@@ -49,5 +50,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   });
 
   const populated = await log.populate("authorId", "name avatar statusMessage");
+
+  sendPushToAll({
+    title: `📋 ${(populated.authorId as any)?.name ?? "누군가"}가 업데이트했습니다`,
+    body: title,
+    url: `/projects/${params.id}`,
+  }).catch(() => {});
+
   return NextResponse.json(populated, { status: 201 });
 }
