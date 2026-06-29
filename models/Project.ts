@@ -12,6 +12,7 @@ const ProjectSchema = new Schema({
   },
   approvedBy: { type: Schema.Types.ObjectId, ref: "User" },
   progressPercentage: { type: Number, default: 0, min: 0, max: 100 },
+  imageUrl: { type: String, default: "" },
   metadata: { type: Schema.Types.Mixed, default: {} },
   startDate: { type: Date },
   completionDate: { type: Date },

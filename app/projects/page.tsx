@@ -1,6 +1,8 @@
 import { connectDB } from "@/lib/mongodb";
 import Project from "@/models/Project";
 import PageLayout from "@/components/PageLayout";
+
+export const dynamic = "force-dynamic";
 import Link from "next/link";
 
 const APPROVAL_LABEL: Record<string, string> = {

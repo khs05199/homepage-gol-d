@@ -1,11 +1,11 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import PageLayout from "@/components/PageLayout";
-import { Plus, Trash2, FolderOpen } from "lucide-react";
+import { Plus, Trash2, FolderOpen, ImagePlus } from "lucide-react";
 
 type PersonalStatus = "준비 중" | "진행 중" | "완료";
 
@@ -19,6 +19,7 @@ interface MyProject {
   hasLogs: boolean;
   personalStatus: PersonalStatus;
   createdAt: string;
+  imageUrl?: string;
 }
 
 const STATUS_TEXT_COLOR: Record<PersonalStatus, string> = {
@@ -39,16 +40,21 @@ const STATUS_STATS_COLOR: Record<PersonalStatus, string> = {
   "완료": "text-red-400",
 };
 
+const EMPTY_FORM = { title: "", type: "개발", description: "", startDate: "", imageUrl: "" };
+
 export default function MyProjectsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [projects, setProjects] = useState<MyProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
 
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ title: "", type: "개발", description: "", startDate: "" });
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [imagePreview, setImagePreview] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
 
@@ -75,6 +81,23 @@ export default function MyProjectsPage() {
     "완료": projects.filter((p) => p.personalStatus === "완료").length,
   };
 
+  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/upload", { method: "POST", body: fd });
+    const data = await res.json();
+    if (data.url) {
+      setForm((p) => ({ ...p, imageUrl: data.url }));
+      setImagePreview(data.url);
+    } else {
+      setFormError("이미지 업로드에 실패했습니다.");
+    }
+    setUploading(false);
+  }
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!form.title.trim()) {
@@ -95,8 +118,16 @@ export default function MyProjectsPage() {
       return;
     }
     setShowModal(false);
-    setForm({ title: "", type: "개발", description: "", startDate: "" });
+    setForm(EMPTY_FORM);
+    setImagePreview("");
     await fetchProjects();
+  }
+
+  function openModal() {
+    setFormError("");
+    setForm(EMPTY_FORM);
+    setImagePreview("");
+    setShowModal(true);
   }
 
   async function handleDelete(id: string) {
@@ -115,7 +146,6 @@ export default function MyProjectsPage() {
 
   return (
     <PageLayout>
-      {/* 전체 높이를 채우고 내부만 스크롤 */}
       <div className="h-screen flex flex-col bg-white">
         {/* 상단 타이틀바 */}
         <div className="px-8 pt-7 pb-5 border-b border-gray-100 flex-shrink-0">
@@ -126,7 +156,6 @@ export default function MyProjectsPage() {
         <div className="flex-1 overflow-y-auto px-8 py-6">
           {/* 프로필 + 통계 */}
           <div className="flex items-center gap-4 mb-7 flex-wrap">
-            {/* 아바타 */}
             <div
               className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-black text-gray-900 flex-shrink-0"
               style={{ background: "linear-gradient(135deg, #D4A017, #F5C518)" }}
@@ -135,7 +164,6 @@ export default function MyProjectsPage() {
             </div>
             <p className="text-lg font-bold text-gray-900">{user?.name ?? "..."}</p>
 
-            {/* 통계 바 */}
             <div
               className="ml-auto flex items-center gap-1 px-5 py-3 rounded-xl text-sm font-bold flex-wrap gap-y-2"
               style={{ backgroundColor: "#111827" }}
@@ -182,30 +210,35 @@ export default function MyProjectsPage() {
                   {/* 내부 카드 (클릭 → 프로젝트 상세) */}
                   <Link
                     href={`/projects/${project._id}`}
-                    className="flex-1 rounded-xl border-2 flex flex-col items-center justify-center min-h-[160px] hover:bg-yellow-50/40 transition-colors relative"
+                    className="flex-1 rounded-xl border-2 flex flex-col items-center justify-center min-h-[160px] hover:bg-yellow-50/40 transition-colors relative overflow-hidden"
                     style={{ borderColor: "#F5C518" }}
                   >
                     {/* 상태 뱃지 */}
                     <span
-                      className={`absolute top-2 right-2.5 text-xs font-bold ${STATUS_TEXT_COLOR[project.personalStatus]}`}
+                      className={`absolute top-2 right-2.5 text-xs font-bold z-10 ${STATUS_TEXT_COLOR[project.personalStatus]}`}
                     >
                       {STATUS_LABEL[project.personalStatus]}
                     </span>
 
-                    {/* 이미지 플레이스홀더 */}
-                    <FolderOpen size={36} className="text-yellow-300 mb-2" />
-                    <span className="text-xs text-yellow-500 font-medium">{project.type}</span>
+                    {project.imageUrl ? (
+                      <img
+                        src={project.imageUrl}
+                        alt={project.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <>
+                        <FolderOpen size={36} className="text-yellow-300 mb-2" />
+                        <span className="text-xs text-yellow-500 font-medium">{project.type}</span>
+                      </>
+                    )}
                   </Link>
                 </div>
               ))}
 
               {/* + 추가 카드 */}
               <button
-                onClick={() => {
-                  setFormError("");
-                  setForm({ title: "", type: "개발", description: "", startDate: "" });
-                  setShowModal(true);
-                }}
+                onClick={openModal}
                 className="rounded-2xl border-2 border-dashed flex flex-col items-center justify-center min-h-[220px] hover:border-yellow-400 hover:bg-yellow-50/20 transition-all text-gray-400 hover:text-yellow-500"
                 style={{ borderColor: "#d1d5db" }}
               >
@@ -220,17 +253,13 @@ export default function MyProjectsPage() {
       {/* 추가 모달 */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* 배경 오버레이 */}
-          <div
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setShowModal(false)}
-          />
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowModal(false)} />
 
-          {/* 모달 본문 */}
-          <div className="relative bg-white rounded-2xl p-8 w-full max-w-md mx-4 shadow-2xl">
+          <div className="relative bg-white rounded-2xl p-8 w-full max-w-md mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-lg font-bold text-gray-900 mb-6">새 프로젝트 추가</h2>
 
             <form onSubmit={handleCreate} className="space-y-4">
+              {/* 제목 */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                   제목 <span className="text-yellow-500">*</span>
@@ -244,6 +273,7 @@ export default function MyProjectsPage() {
                 />
               </div>
 
+              {/* 유형 */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                   유형 <span className="text-yellow-500">*</span>
@@ -259,6 +289,7 @@ export default function MyProjectsPage() {
                 </select>
               </div>
 
+              {/* 설명 */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">설명</label>
                 <textarea
@@ -270,6 +301,7 @@ export default function MyProjectsPage() {
                 />
               </div>
 
+              {/* 시작일 */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">시작일</label>
                 <input
@@ -278,6 +310,49 @@ export default function MyProjectsPage() {
                   onChange={(e) => setForm((p) => ({ ...p, startDate: e.target.value }))}
                   className={inputClass}
                 />
+              </div>
+
+              {/* 이미지 업로드 */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  대표 이미지
+                </label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
+
+                {imagePreview ? (
+                  <div className="relative w-full h-40 rounded-xl overflow-hidden border border-gray-200">
+                    <img src={imagePreview} alt="미리보기" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImagePreview("");
+                        setForm((p) => ({ ...p, imageUrl: "" }));
+                        if (fileInputRef.current) fileInputRef.current.value = "";
+                      }}
+                      className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-lg hover:bg-black/70 transition-colors"
+                    >
+                      제거
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="w-full h-32 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-yellow-400 hover:text-yellow-500 transition-all disabled:opacity-50"
+                  >
+                    <ImagePlus size={24} />
+                    <span className="text-xs font-medium">
+                      {uploading ? "업로드 중..." : "클릭하여 이미지 선택"}
+                    </span>
+                  </button>
+                )}
               </div>
 
               {formError && (
@@ -296,7 +371,7 @@ export default function MyProjectsPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={submitting || uploading}
                   className="flex-1 py-3 rounded-xl text-sm font-bold text-gray-900 disabled:opacity-60 hover:opacity-90 transition-all"
                   style={{ background: "linear-gradient(135deg, #D4A017, #F5C518)" }}
                 >
