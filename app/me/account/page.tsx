@@ -6,8 +6,45 @@ import { useRouter } from "next/navigation";
 import PageLayout from "@/components/PageLayout";
 import { Eye, EyeOff } from "lucide-react";
 
+const inputClass =
+  "w-full px-4 py-3.5 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-300 text-sm focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100 transition-all";
+
+function PasswordInput({
+  value,
+  onChange,
+  show,
+  onToggle,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  show: boolean;
+  onToggle: () => void;
+  placeholder: string;
+}) {
+  return (
+    <div className="relative">
+      <input
+        type={show ? "text" : "password"}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required
+        placeholder={placeholder}
+        className={`${inputClass} pr-11`}
+      />
+      <button
+        type="button"
+        onClick={onToggle}
+        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+      >
+        {show ? <EyeOff size={16} /> : <Eye size={16} />}
+      </button>
+    </div>
+  );
+}
+
 export default function AccountPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
 
   // 아이디
@@ -86,43 +123,6 @@ export default function AccountPage() {
       setPwMsg(data.message);
       setPwForm({ current: "", next: "", confirm: "" });
     }
-  }
-
-  const inputClass =
-    "w-full px-4 py-3.5 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-300 text-sm focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100 transition-all";
-
-  function PasswordInput({
-    value,
-    onChange,
-    show,
-    onToggle,
-    placeholder,
-  }: {
-    value: string;
-    onChange: (v: string) => void;
-    show: boolean;
-    onToggle: () => void;
-    placeholder: string;
-  }) {
-    return (
-      <div className="relative">
-        <input
-          type={show ? "text" : "password"}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          required
-          placeholder={placeholder}
-          className={`${inputClass} pr-11`}
-        />
-        <button
-          type="button"
-          onClick={onToggle}
-          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          {show ? <EyeOff size={16} /> : <Eye size={16} />}
-        </button>
-      </div>
-    );
   }
 
   return (
@@ -212,14 +212,15 @@ export default function AccountPage() {
                 onToggle={() => setShowConfirm((v) => !v)}
                 placeholder="새 비밀번호 재입력"
               />
-              {/* 실시간 일치 여부 */}
               {pwForm.confirm && pwForm.next && (
                 <p
                   className={`text-xs mt-1.5 ${
                     pwForm.next === pwForm.confirm ? "text-emerald-500" : "text-red-400"
                   }`}
                 >
-                  {pwForm.next === pwForm.confirm ? "비밀번호가 일치합니다." : "비밀번호가 일치하지 않습니다."}
+                  {pwForm.next === pwForm.confirm
+                    ? "비밀번호가 일치합니다."
+                    : "비밀번호가 일치하지 않습니다."}
                 </p>
               )}
             </div>
