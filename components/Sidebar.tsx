@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Users, FolderOpen, ShieldCheck,
   Settings, BookOpen, Archive, CalendarDays, ClipboardList,
-  LogOut, KeyRound, NotebookText,
+  LogOut, KeyRound, FileText,
 } from "lucide-react";
 
 const NAV_TOP = [
@@ -21,7 +21,7 @@ const NAV_CLUB = [
   { href: "/club-info", label: "동아리 정보", icon: BookOpen },
   { href: "/resources", label: "자료실", icon: Archive, hasNew: true },
   { href: "/schedule", label: "일정 및 공지", icon: CalendarDays },
-  { href: "/meetings", label: "회의록", icon: NotebookText },
+  { href: "/meetings", label: "회의록", icon: FileText },
 ];
 
 const NAV_BOTTOM = [
@@ -30,6 +30,43 @@ const NAV_BOTTOM = [
 ];
 
 const VALUES = ["동반성장", "소통과 공유", "도전 우선주의"];
+
+function NavLink({
+  href,
+  label,
+  icon: Icon,
+  showNew,
+  pathname,
+  resourceHasNew,
+}: {
+  href: string;
+  label: string;
+  icon: any;
+  showNew?: boolean;
+  pathname: string;
+  resourceHasNew: boolean;
+}) {
+  const active = pathname === href || (href !== "/" && pathname.startsWith(href));
+  return (
+    <Link
+      href={href}
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+        active
+          ? "text-yellow-300"
+          : "text-gray-400 hover:text-white hover:bg-white/5"
+      }`}
+      style={active ? { backgroundColor: "rgba(212,160,23,0.12)" } : {}}
+    >
+      <Icon size={16} className={active ? "text-yellow-400" : ""} />
+      <span className="flex-1">{label}</span>
+      {showNew && resourceHasNew && (
+        <span className="text-[9px] font-bold text-white bg-red-500 rounded-full w-4 h-4 flex items-center justify-center">
+          N
+        </span>
+      )}
+    </Link>
+  );
+}
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -45,31 +82,6 @@ export default function Sidebar() {
       .then((d) => setResourceHasNew(d.hasAnyNew ?? false))
       .catch(() => {});
   }, []);
-
-  function NavLink({
-    href, label, icon: Icon, showNew,
-  }: { href: string; label: string; icon: any; showNew?: boolean }) {
-    const active = pathname === href || (href !== "/" && pathname.startsWith(href));
-    return (
-      <Link
-        href={href}
-        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-          active
-            ? "text-yellow-300"
-            : "text-gray-400 hover:text-white hover:bg-white/5"
-        }`}
-        style={active ? { backgroundColor: "rgba(212,160,23,0.12)" } : {}}
-      >
-        <Icon size={16} className={active ? "text-yellow-400" : ""} />
-        <span className="flex-1">{label}</span>
-        {showNew && resourceHasNew && (
-          <span className="text-[9px] font-bold text-white bg-red-500 rounded-full w-4 h-4 flex items-center justify-center">
-            N
-          </span>
-        )}
-      </Link>
-    );
-  }
 
   return (
     <aside
@@ -100,34 +112,54 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-5 overflow-y-auto space-y-0.5">
-        {/* 메인 */}
         {NAV_TOP.map(({ href, label, icon }) => (
-          <NavLink key={href} href={href} label={label} icon={icon} />
+          <NavLink
+            key={href}
+            href={href}
+            label={label}
+            icon={icon}
+            pathname={pathname}
+            resourceHasNew={resourceHasNew}
+          />
         ))}
 
-        {/* 동아리 섹션 구분선 */}
         <div className="px-3 pt-4 pb-1">
           <p className="text-[10px] text-gray-600 uppercase tracking-widest font-semibold">동아리</p>
         </div>
 
         {NAV_CLUB.map(({ href, label, icon, hasNew }) => (
-          <NavLink key={href} href={href} label={label} icon={icon} showNew={hasNew} />
+          <NavLink
+            key={href}
+            href={href}
+            label={label}
+            icon={icon}
+            showNew={hasNew}
+            pathname={pathname}
+            resourceHasNew={resourceHasNew}
+          />
         ))}
 
-        {/* 관리 섹션 */}
         <div className="px-3 pt-4 pb-1">
           <p className="text-[10px] text-gray-600 uppercase tracking-widest font-semibold">관리</p>
         </div>
 
         {NAV_BOTTOM.map(({ href, label, icon, leaderOnly }) => {
           if (leaderOnly && !isLeader) return null;
-          return <NavLink key={href} href={href} label={label} icon={icon} />;
+          return (
+            <NavLink
+              key={href}
+              href={href}
+              label={label}
+              icon={icon}
+              pathname={pathname}
+              resourceHasNew={resourceHasNew}
+            />
+          );
         })}
       </nav>
 
       {/* User */}
       <div className="px-3 pb-4 pt-3 border-t border-white/8 space-y-0.5">
-        {/* 사용자 아이덴티티 */}
         <div className="flex items-center gap-3 px-3 py-2.5">
           <div
             className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-gray-900 flex-shrink-0"
@@ -145,7 +177,6 @@ export default function Sidebar() {
           </div>
         </div>
 
-        {/* 아이디 · 비밀번호 변경 */}
         <Link
           href="/me/account"
           className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
@@ -159,7 +190,6 @@ export default function Sidebar() {
           <span>아이디 · 비밀번호 변경</span>
         </Link>
 
-        {/* 로그아웃 */}
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-all w-full"

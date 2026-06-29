@@ -14,11 +14,6 @@ function canEdit(role?: string) {
   return !!role && CAN_EDIT_ROLES.includes(role);
 }
 
-function formatDate(dateStr: string) {
-  const d = new Date(dateStr);
-  return `${d.getMonth() + 1}월 ${d.getDate()}일`;
-}
-
 function formatTime(dateStr: string) {
   const d = new Date(dateStr);
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
