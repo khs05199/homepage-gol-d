@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Users, FolderOpen, ShieldCheck,
   Settings, BookOpen, Archive, CalendarDays, ClipboardList,
+  LogOut, KeyRound,
 } from "lucide-react";
 
 const NAV_TOP = [
@@ -124,25 +125,46 @@ export default function Sidebar() {
       </nav>
 
       {/* User */}
-      <div className="px-5 py-5 border-t border-white/8">
-        <p className="text-[10px] text-gray-600 uppercase tracking-wider mb-1.5">
-          로그인 정보
-        </p>
+      <div className="px-3 pb-4 pt-3 border-t border-white/8 space-y-0.5">
+        {/* 사용자 아이덴티티 */}
+        <div className="flex items-center gap-3 px-3 py-2.5">
+          <div
+            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-gray-900 flex-shrink-0"
+            style={{ background: "linear-gradient(135deg, #D4A017, #F5C518)" }}
+          >
+            {(session?.user?.name ?? "?")[0].toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-white truncate">
+              {session?.user?.name ?? "..."}
+            </p>
+            {role && (
+              <p className="text-[10px] text-gray-500 leading-none mt-0.5">{role}</p>
+            )}
+          </div>
+        </div>
+
+        {/* 아이디 · 비밀번호 변경 */}
         <Link
-          href="/me"
-          className="text-sm text-white font-medium hover:text-yellow-300 transition-colors"
+          href="/me/account"
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+            pathname === "/me/account"
+              ? "text-yellow-300"
+              : "text-gray-400 hover:text-white hover:bg-white/5"
+          }`}
+          style={pathname === "/me/account" ? { backgroundColor: "rgba(212,160,23,0.12)" } : {}}
         >
-          {session?.user?.name ?? "..."}
+          <KeyRound size={16} className={pathname === "/me/account" ? "text-yellow-400" : ""} />
+          <span>아이디 · 비밀번호 변경</span>
         </Link>
-        {role && (
-          <span className="ml-2 text-[10px] text-gray-500">({role})</span>
-        )}
-        <br />
+
+        {/* 로그아웃 */}
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="text-xs text-gray-500 hover:text-yellow-400 mt-1 transition-colors"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-all w-full"
         >
-          로그아웃
+          <LogOut size={16} />
+          <span>로그아웃</span>
         </button>
       </div>
     </aside>
