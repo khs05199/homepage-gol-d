@@ -6,13 +6,14 @@ import { useSession, signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Users, FolderOpen, ShieldCheck,
-  Settings, BookOpen, Archive, CalendarDays,
+  Settings, BookOpen, Archive, CalendarDays, ClipboardList,
 } from "lucide-react";
 
 const NAV_TOP = [
   { href: "/", label: "대시보드", icon: LayoutDashboard },
   { href: "/members", label: "부원 관리", icon: Users },
   { href: "/projects", label: "프로젝트", icon: FolderOpen },
+  { href: "/me/projects", label: "개인 프로젝트 관리", icon: ClipboardList },
 ];
 
 const NAV_CLUB = [
