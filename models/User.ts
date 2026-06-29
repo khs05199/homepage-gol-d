@@ -12,6 +12,7 @@ const UserSchema = new Schema({
   skills: [String],
   portfolioSlug: { type: String, unique: true, sparse: true },
   createdAt: { type: Date, default: Date.now },
+  lastSeen: { type: Date, default: null },
 });
 
 export default models.User || model("User", UserSchema);

@@ -9,6 +9,7 @@ import {
   Settings, BookOpen, Archive, CalendarDays, ClipboardList,
   LogOut, KeyRound, FileText, Bell, BellOff,
 } from "lucide-react";
+import OnlineCount from "./OnlineCount";
 
 const NAV_TOP = [
   { href: "/", label: "대시보드", icon: LayoutDashboard },
@@ -238,6 +239,9 @@ export default function Sidebar() {
           );
         })}
       </nav>
+
+      {/* 실시간 접속자 */}
+      <OnlineCount />
 
       {/* User */}
       <div className="px-3 pb-4 pt-3 border-t border-white/8 space-y-0.5">
