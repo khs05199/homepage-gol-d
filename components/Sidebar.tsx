@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Users, FolderOpen, ShieldCheck,
   Settings, BookOpen, Archive, CalendarDays, ClipboardList,
-  LogOut, KeyRound,
+  LogOut, KeyRound, NotebookText,
 } from "lucide-react";
 
 const NAV_TOP = [
@@ -21,6 +21,7 @@ const NAV_CLUB = [
   { href: "/club-info", label: "동아리 정보", icon: BookOpen },
   { href: "/resources", label: "자료실", icon: Archive, hasNew: true },
   { href: "/schedule", label: "일정 및 공지", icon: CalendarDays },
+  { href: "/meetings", label: "회의록", icon: NotebookText },
 ];
 
 const NAV_BOTTOM = [

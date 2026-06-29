@@ -27,6 +27,7 @@ export default async function HomePage() {
     Post.find()
       .populate("authorId", "name avatar role statusMessage portfolioSlug")
       .populate("projectId", "title type _id")
+      .populate("meetingId", "_id")
       .sort({ createdAt: -1 })
       .limit(20)
       .lean(),

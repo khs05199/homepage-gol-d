@@ -13,6 +13,9 @@ function getStoryHref(member: any): string {
   if (member.recentPostCategory === "공지") {
     return "/schedule";
   }
+  if (member.recentPostCategory === "회의") {
+    return "/meetings";
+  }
   return `/profile/${member.portfolioSlug ?? member.username}`;
 }
 
@@ -123,7 +126,12 @@ function PostCard({ post }: { post: any }) {
   const proj = post.projectId;
   const hasImage = !!post.imageUrl;
 
-  const targetUrl = proj?._id ? `/projects/${proj._id}` : null;
+  const meetingId = post.meetingId?._id ?? post.meetingId;
+  const targetUrl = proj?._id
+    ? `/projects/${proj._id}`
+    : meetingId
+    ? "/meetings"
+    : null;
 
   const cardContent = (
     <>

@@ -8,6 +8,7 @@ const MeetingSchema = new Schema({
   participantIds: [{ type: Schema.Types.ObjectId, ref: "User" }],
   date: { type: Date, required: true },
   locationOrLink: { type: String, default: "" },
+  imageUrl: { type: String, default: "" },
   createdAt: { type: Date, default: Date.now },
 });
 
