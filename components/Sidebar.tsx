@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Users, FolderOpen, ShieldCheck,
   Settings, BookOpen, Archive, CalendarDays, ClipboardList,
-  LogOut, KeyRound, FileText, Bell, BellOff,
+  LogOut, KeyRound, FileText,
 } from "lucide-react";
 import OnlineCount from "./OnlineCount";
 
@@ -31,135 +31,6 @@ const NAV_BOTTOM = [
 ];
 
 const VALUES = ["동반성장", "소통과 공유", "도전 우선주의"];
-
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!;
-
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const rawData = atob(base64);
-  return Uint8Array.from(Array.from(rawData).map((c) => c.charCodeAt(0)));
-}
-
-function NotificationToggle() {
-  const [mounted, setMounted] = useState(false);
-  const [status, setStatus] = useState<"default" | "granted" | "denied">("default");
-  const [subscribed, setSubscribed] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState("");
-
-  useEffect(() => {
-    setMounted(true);
-    if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
-    setStatus(Notification.permission as "default" | "granted" | "denied");
-    navigator.serviceWorker.ready.then((reg) =>
-      reg.pushManager.getSubscription().then((sub) => setSubscribed(!!sub))
-    );
-  }, []);
-
-  async function toggleSubscription() {
-    if (!("serviceWorker" in navigator)) return;
-    setLoading(true);
-    setMsg("");
-    try {
-      const reg = await navigator.serviceWorker.ready;
-
-      if (subscribed) {
-        const sub = await reg.pushManager.getSubscription();
-        if (sub) {
-          await fetch("/api/push/subscribe", {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ endpoint: sub.endpoint }),
-          });
-          await sub.unsubscribe();
-          setSubscribed(false);
-          setMsg("알림 해제됨");
-        }
-      } else {
-        const permission = await Notification.requestPermission();
-        setStatus(permission as "default" | "granted" | "denied");
-        if (permission !== "granted") {
-          setMsg("브라우저 알림 권한이 거부됨");
-          return;
-        }
-
-        if (!VAPID_PUBLIC_KEY) {
-          setMsg("서버 설정 오류 (VAPID 키 없음)");
-          return;
-        }
-
-        const sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-        });
-        const res = await fetch("/api/push/subscribe", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ subscription: sub }),
-        });
-        if (res.ok) {
-          setSubscribed(true);
-          setMsg("알림 등록 완료 ✓");
-        } else {
-          setMsg("서버 저장 실패");
-        }
-      }
-    } catch (e: any) {
-      setMsg("오류: " + (e?.message ?? "알 수 없음"));
-    } finally {
-      setLoading(false);
-      setTimeout(() => setMsg(""), 4000);
-    }
-  }
-
-  async function sendTest() {
-    setMsg("테스트 전송 중...");
-    const res = await fetch("/api/push/test", { method: "POST" });
-    const data = await res.json();
-    if (res.ok) {
-      const ok = data.results?.filter((r: any) => r.ok).length ?? 0;
-      setMsg(`테스트 전송 완료 (${ok}/${data.subscriptions})`);
-    } else {
-      setMsg("실패: " + (data.error ?? "알 수 없음"));
-    }
-    setTimeout(() => setMsg(""), 5000);
-  }
-
-  if (!mounted) return null;
-  if (!("Notification" in window) || status === "denied") return null;
-
-  return (
-    <div className="space-y-0.5">
-      <button
-        onClick={toggleSubscription}
-        disabled={loading}
-        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all w-full disabled:opacity-50 ${
-          subscribed
-            ? "text-yellow-300 hover:text-white hover:bg-white/5"
-            : "text-gray-400 hover:text-white hover:bg-white/5"
-        }`}
-      >
-        {subscribed ? <Bell size={16} className="text-yellow-400" /> : <BellOff size={16} />}
-        <span>{loading ? "처리 중..." : subscribed ? "알림 켜짐" : "알림 받기"}</span>
-      </button>
-
-      {subscribed && (
-        <button
-          onClick={sendTest}
-          className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-gray-500 hover:text-gray-300 hover:bg-white/5 transition-all w-full"
-        >
-          <Bell size={13} />
-          <span>테스트 알림 보내기</span>
-        </button>
-      )}
-
-      {msg && (
-        <p className="px-3 text-[11px] text-yellow-400/80 leading-tight">{msg}</p>
-      )}
-    </div>
-  );
-}
 
 function NavLink({
   href,
@@ -322,8 +193,6 @@ export default function Sidebar() {
           <KeyRound size={16} className={pathname === "/me/account" ? "text-yellow-400" : ""} />
           <span>아이디 · 비밀번호 변경</span>
         </Link>
-
-        <NotificationToggle />
 
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}

@@ -4,7 +4,6 @@ import { connectDB } from "@/lib/mongodb";
 import Meeting from "@/models/Meeting";
 import Post from "@/models/Post";
 import { authOptions } from "@/lib/auth";
-import { sendPushToAll } from "@/lib/sendPush";
 
 const CAN_EDIT = ["회장", "부회장", "서기", "동아리 전담 멘토"];
 
@@ -61,7 +60,6 @@ export async function POST(req: NextRequest) {
     status: "완료",
   });
 
-  // 대시보드 피드에 노출될 Post 생성
   await Post.create({
     title: `[회의록] ${title}`,
     content: notes ?? "",
@@ -74,12 +72,6 @@ export async function POST(req: NextRequest) {
   const populated = await Meeting.findById(meeting._id)
     .populate("participantIds", "name role")
     .lean();
-
-  sendPushToAll({
-    title: `📝 새 회의록: ${title}`,
-    body: notes ? notes.slice(0, 80) : `${date} 회의`,
-    url: "/meetings",
-  }).catch(() => {});
 
   return NextResponse.json(populated, { status: 201 });
 }
