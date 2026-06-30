@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Users, FolderOpen, ShieldCheck,
   Settings, BookOpen, Archive, CalendarDays, ClipboardList,
-  LogOut, KeyRound, FileText,
+  LogOut, KeyRound, FileText, Bell, BellOff,
 } from "lucide-react";
 import OnlineCount from "./OnlineCount";
 
@@ -31,6 +31,94 @@ const NAV_BOTTOM = [
 ];
 
 const VALUES = ["동반성장", "소통과 공유", "도전 우선주의"];
+
+const VAPID_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
+
+function urlBase64ToUint8Array(base64: string) {
+  const pad = "=".repeat((4 - (base64.length % 4)) % 4);
+  const b64 = (base64 + pad).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(b64);
+  return Uint8Array.from(Array.from(raw).map((c) => c.charCodeAt(0)));
+}
+
+function NotificationToggle() {
+  const [mounted, setMounted] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
+  const [denied, setDenied] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  useEffect(() => {
+    setMounted(true);
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
+    if (Notification.permission === "denied") { setDenied(true); return; }
+    navigator.serviceWorker.ready.then((reg) =>
+      reg.pushManager.getSubscription().then((sub) => setSubscribed(!!sub))
+    );
+  }, []);
+
+  function flash(text: string) {
+    setMsg(text);
+    setTimeout(() => setMsg(""), 4000);
+  }
+
+  async function toggle() {
+    if (!("serviceWorker" in navigator) || !VAPID_KEY) return;
+    setLoading(true);
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      if (subscribed) {
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          await sub.unsubscribe();
+          await fetch("/api/push/subscribe", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ endpoint: sub.endpoint }),
+          });
+          setSubscribed(false);
+          flash("알림 해제됨");
+        }
+      } else {
+        const perm = await Notification.requestPermission();
+        if (perm !== "granted") { setDenied(perm === "denied"); flash("알림 권한이 거부됨"); return; }
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_KEY),
+        });
+        const res = await fetch("/api/push/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ subscription: sub }),
+        });
+        if (res.ok) { setSubscribed(true); flash("알림 등록 완료 ✓"); }
+        else flash("서버 오류 — 다시 시도해주세요");
+      }
+    } catch (e: any) {
+      flash("오류: " + (e?.message ?? "알 수 없음"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (!mounted || !("Notification" in window) || denied) return null;
+
+  return (
+    <div>
+      <button
+        onClick={toggle}
+        disabled={loading}
+        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all w-full disabled:opacity-40 ${
+          subscribed ? "text-yellow-300 hover:bg-white/5" : "text-gray-400 hover:text-white hover:bg-white/5"
+        }`}
+      >
+        {subscribed ? <Bell size={16} className="text-yellow-400" /> : <BellOff size={16} />}
+        <span>{loading ? "처리 중..." : subscribed ? "알림 켜짐" : "알림 받기"}</span>
+      </button>
+      {msg && <p className="px-3 pb-1 text-[11px] text-yellow-400/70">{msg}</p>}
+    </div>
+  );
+}
 
 function NavLink({
   href,
@@ -193,6 +281,8 @@ export default function Sidebar() {
           <KeyRound size={16} className={pathname === "/me/account" ? "text-yellow-400" : ""} />
           <span>아이디 · 비밀번호 변경</span>
         </Link>
+
+        <NotificationToggle />
 
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}

@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/mongodb";
 import Post from "@/models/Post";
 import { authOptions } from "@/lib/auth";
 import { isLeadership } from "@/lib/roles";
+import { sendPushToAll } from "@/lib/sendPush";
 
 export async function GET() {
   await connectDB();
@@ -36,5 +37,13 @@ export async function POST(req: NextRequest) {
   });
 
   const populated = await post.populate("authorId", "name avatar username role");
+
+  sendPushToAll({
+    title: `📢 새 공지: ${title}`,
+    body: content.slice(0, 80),
+    url: "/schedule",
+    tag: "announcement",
+  }).catch(() => {});
+
   return NextResponse.json(populated, { status: 201 });
 }
