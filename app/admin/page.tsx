@@ -1,4 +1,4 @@
-import { getServerSession } from "next-auth";
+﻿import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { isLeadership } from "@/lib/roles";
@@ -7,6 +7,9 @@ import AdminDashboard from "@/components/AdminDashboard";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import Post from "@/models/Post";
+
+export const dynamic = "force-dynamic";
+
 
 export default async function AdminPage() {
   const session = await getServerSession(authOptions);

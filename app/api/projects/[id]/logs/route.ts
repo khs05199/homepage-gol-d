@@ -6,6 +6,8 @@ import Post from "@/models/Post";
 import { authOptions } from "@/lib/auth";
 import { sendEmailToAll } from "@/lib/sendEmail";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
   await connectDB();
   const logs = await Post.find({ projectId: params.id, category: "프로젝트" })

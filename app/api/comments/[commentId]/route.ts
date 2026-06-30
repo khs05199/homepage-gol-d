@@ -5,6 +5,8 @@ import Comment from "@/models/Comment";
 import Post from "@/models/Post";
 import { authOptions } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 export async function DELETE(_: NextRequest, { params }: { params: { commentId: string } }) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });

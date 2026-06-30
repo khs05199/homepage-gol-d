@@ -5,6 +5,8 @@ import Post from "@/models/Post";
 import { authOptions } from "@/lib/auth";
 import { isLeadership } from "@/lib/roles";
 
+export const dynamic = "force-dynamic";
+
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   if (!isLeadership((session?.user as any)?.role)) {

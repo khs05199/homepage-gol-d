@@ -6,6 +6,8 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
+export const dynamic = "force-dynamic";
+
 const APPROVAL_LABEL: Record<string, string> = {
   진행중: "진행중",
   검토대기: "검토대기",

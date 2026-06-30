@@ -1,10 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { connectDB } from "@/lib/mongodb";
 import Post from "@/models/Post";
 import { authOptions } from "@/lib/auth";
 import { isLeadership } from "@/lib/roles";
 import { sendEmailToAll } from "@/lib/sendEmail";
+
+export const dynamic = "force-dynamic";
+
 
 export async function GET() {
   await connectDB();

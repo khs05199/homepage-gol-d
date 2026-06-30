@@ -1,6 +1,9 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Resource, { RESOURCE_FOLDERS } from "@/models/Resource";
+
+export const dynamic = "force-dynamic";
+
 
 export async function GET() {
   await connectDB();

@@ -5,6 +5,8 @@ import Post from "@/models/Post";
 import Comment from "@/models/Comment";
 import { authOptions } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
   await connectDB();
   const posts = await Post.find({ projectId: params.id }).select("_id");

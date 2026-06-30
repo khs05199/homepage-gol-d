@@ -3,6 +3,8 @@ import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import Project from "@/models/Project";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(_: Request, { params }: { params: { slug: string } }) {
   await connectDB();
   const user = await User.findOne({ portfolioSlug: params.slug }).select("-passwordHash");

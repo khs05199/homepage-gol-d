@@ -1,7 +1,10 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
+
+export const dynamic = "force-dynamic";
+
 
 const MEMBERS = [
   { username: "cb.yang",        password: "261111", name: "양치복",     role: "부원" },

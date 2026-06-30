@@ -1,9 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import { authOptions } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
+
 
 export async function PATCH(req: NextRequest) {
   const session = await getServerSession(authOptions);

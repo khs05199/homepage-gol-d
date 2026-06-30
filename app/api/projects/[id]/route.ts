@@ -7,6 +7,8 @@ import Comment from "@/models/Comment";
 import Reaction from "@/models/Reaction";
 import { authOptions } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
   await connectDB();
   const project = await Project.findById(params.id)

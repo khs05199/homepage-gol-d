@@ -1,10 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { connectDB } from "@/lib/mongodb";
 import Meeting from "@/models/Meeting";
 import Post from "@/models/Post";
 import { authOptions } from "@/lib/auth";
 import { sendEmailToAll } from "@/lib/sendEmail";
+
+export const dynamic = "force-dynamic";
+
 
 const CAN_EDIT = ["회장", "부회장", "서기", "동아리 전담 멘토"];
 

@@ -1,7 +1,10 @@
-import { connectDB } from "@/lib/mongodb";
+﻿import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import PageLayout from "@/components/PageLayout";
 import Link from "next/link";
+
+export const dynamic = "force-dynamic";
+
 
 
 export default async function MembersPage() {

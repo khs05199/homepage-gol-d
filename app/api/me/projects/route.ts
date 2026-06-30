@@ -1,9 +1,12 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { connectDB } from "@/lib/mongodb";
 import Project from "@/models/Project";
 import Post from "@/models/Post";
 import { authOptions } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
+
 
 export async function GET() {
   const session = await getServerSession(authOptions);
