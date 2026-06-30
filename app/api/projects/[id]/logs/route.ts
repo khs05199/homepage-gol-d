@@ -4,7 +4,7 @@ import { connectDB } from "@/lib/mongodb";
 import Project from "@/models/Project";
 import Post from "@/models/Post";
 import { authOptions } from "@/lib/auth";
-import { sendPushToAll } from "@/lib/sendPush";
+import { sendEmailToAll } from "@/lib/sendEmail";
 
 export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
   await connectDB();
@@ -51,11 +51,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const populated = await log.populate("authorId", "name avatar statusMessage");
 
-  sendPushToAll({
-    title: `📋 ${(populated.authorId as any)?.name ?? "누군가"}님이 업데이트했습니다`,
-    body: title,
+  sendEmailToAll({
+    subject: `[GOL:D 프로젝트] ${(populated.authorId as any)?.name ?? "부원"}님이 업데이트했습니다`,
+    authorName: (populated.authorId as any)?.name ?? "부원",
+    title,
+    content,
     url: `/projects/${params.id}`,
-    tag: `project-${params.id}`,
   }).catch(() => {});
 
   return NextResponse.json(populated, { status: 201 });
