@@ -1,8 +1,6 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 import { connectDB } from "./mongodb";
 import User from "@/models/User";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 type EmailPayload = {
   subject: string;
@@ -13,8 +11,8 @@ type EmailPayload = {
 };
 
 export async function sendEmailToAll(payload: EmailPayload) {
-  if (!process.env.RESEND_API_KEY) {
-    console.warn("[sendEmail] RESEND_API_KEY 미설정 — 이메일 발송 건너뜀");
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    console.warn("[sendEmail] GMAIL_USER 또는 GMAIL_APP_PASSWORD 미설정 — 건너뜀");
     return;
   }
 
@@ -27,22 +25,45 @@ export async function sendEmailToAll(payload: EmailPayload) {
 
     if (emails.length === 0) return;
 
-    const from = process.env.EMAIL_FROM ?? "GOL:D <onboarding@resend.dev>";
-    const html = buildEmailHtml(payload);
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
+      },
+    });
 
-    await resend.batch.send(
-      emails.map((to) => ({ from, to, subject: payload.subject, html }))
-    );
-    console.log(`[sendEmail] ${emails.length}명 발송 완료`);
+    const siteUrl = process.env.NEXTAUTH_URL ?? "";
+    const fullUrl = payload.url.startsWith("http")
+      ? payload.url
+      : `${siteUrl}${payload.url}`;
+
+    await transporter.sendMail({
+      from: `"GOL:D 동아리" <${process.env.GMAIL_USER}>`,
+      to: process.env.GMAIL_USER,
+      bcc: emails,
+      subject: payload.subject,
+      html: buildEmailHtml({ ...payload, fullUrl }),
+    });
+
+    console.log(`[sendEmail] ${emails.length}명 BCC 발송 완료`);
   } catch (err) {
     console.error("[sendEmail] 발송 실패:", err);
   }
 }
 
-function buildEmailHtml({ authorName, title, content, url }: EmailPayload) {
-  const preview = content ? content.replace(/<[^>]+>/g, "").slice(0, 120) : "";
-  const siteUrl = process.env.NEXTAUTH_URL ?? "";
-  const fullUrl = url.startsWith("http") ? url : `${siteUrl}${url}`;
+function buildEmailHtml({
+  authorName,
+  title,
+  content,
+  fullUrl,
+}: EmailPayload & { fullUrl: string }) {
+  const preview = content
+    ? content.replace(/<[^>]+>/g, "").slice(0, 120)
+    : "";
+  const hasMore = content ? content.replace(/<[^>]+>/g, "").length > 120 : false;
 
   return `<!DOCTYPE html>
 <html lang="ko">
@@ -64,15 +85,14 @@ function buildEmailHtml({ authorName, title, content, url }: EmailPayload) {
       <h2 style="margin:0 0 14px;font-size:18px;color:#fff;line-height:1.4;font-weight:700;">
         ${title}
       </h2>
-      ${preview ? `<p style="margin:0 0 22px;font-size:14px;color:#aaa;line-height:1.7;">${preview}${content && content.replace(/<[^>]+>/g, "").length > 120 ? "…" : ""}</p>` : ""}
+      ${preview ? `<p style="margin:0 0 22px;font-size:14px;color:#aaa;line-height:1.7;">${preview}${hasMore ? "&hellip;" : ""}</p>` : ""}
       <a href="${fullUrl}"
          style="display:inline-block;background:linear-gradient(135deg,#D4A017,#F5C518);color:#111;font-weight:700;font-size:14px;text-decoration:none;padding:12px 26px;border-radius:10px;">
         확인하러 가기 &rarr;
       </a>
     </div>
     <p style="text-align:center;margin:20px 0 0;font-size:11px;color:#444;">
-      GOL:D 동아리 홈페이지 자동 알림 메일입니다 &middot;
-      <a href="${siteUrl}" style="color:#666;text-decoration:none;">홈페이지 방문</a>
+      GOL:D 동아리 홈페이지 자동 알림 메일입니다
     </p>
   </div>
 </body>
