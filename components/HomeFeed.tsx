@@ -4,6 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 
 const STORY_ROW_LIMIT = 8;
+const GOLD_GRADIENT =
+  "linear-gradient(135deg, #BF953F 0%, #FCF6BA 22%, #B38728 45%, #FBF5B7 68%, #AA771C 100%)";
+const NAVY = "#16233F";
 
 // ── 스토리 이동 링크 계산 ──────────────────────────────────────────
 function getStoryHref(member: any): string {
@@ -19,7 +22,7 @@ function getStoryHref(member: any): string {
   return `/profile/${member.portfolioSlug ?? member.username}`;
 }
 
-// ── 멤버 스토리 직사각형 ──────────────────────────────────────────
+// ── 멤버 스토리 원형 아바타 ──────────────────────────────────────────
 function StoryCard({ member }: { member: any }) {
   const displayId = member.username ?? member.portfolioSlug ?? member.name ?? "?";
   const initials = displayId.split(".")[0].toUpperCase().slice(0, 2);
@@ -28,10 +31,10 @@ function StoryCard({ member }: { member: any }) {
 
   return (
     <Link href={href} className="group relative flex flex-col items-center gap-1 shrink-0">
-      {/* 아바타 — 직사각형 */}
+      {/* 아바타 — 원형 (인스타그램 스토리 스타일) */}
       <div
-        className="w-11 h-14 rounded-xl border-2 border-gray-900 overflow-hidden flex items-center justify-center cursor-pointer group-hover:scale-105 transition-transform"
-        style={{ background: "radial-gradient(circle at 30% 30%, #FFD700, #D4A700)" }}
+        className="w-14 h-14 rounded-full border-2 overflow-hidden flex items-center justify-center cursor-pointer group-hover:scale-105 transition-transform"
+        style={{ background: "radial-gradient(circle at 30% 30%, #FFD700, #D4A700)", borderColor: "#16233F" }}
       >
         {member.avatar ? (
           <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
@@ -43,18 +46,18 @@ function StoryCard({ member }: { member: any }) {
       </div>
 
       {/* 아이디 */}
-      <span className="text-[9px] text-gray-700 font-medium max-w-[48px] truncate text-center leading-tight">
+      <span className="text-[9px] font-medium max-w-[48px] truncate text-center leading-tight" style={{ color: "#16233F" }}>
         {displayId}
       </span>
 
-      {/* 말풍선 — 아이디 아래에 표시, 검정 배경 금색 글자 */}
+      {/* 말풍선 — 아이디 아래에 표시 */}
       {bubbleText && (
         <div
           className="absolute top-full mt-1 left-1/2 -translate-x-1/2
                      text-[9px] font-semibold px-2 py-1 rounded-md
                      whitespace-nowrap max-w-[100px] truncate z-20
                      opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-          style={{ background: "#1A1A1A", color: "#FFD700" }}
+          style={{ background: "#FBF5E6", color: "#16233F" }}
         >
           {/* 위쪽 꼭지 */}
           <span
@@ -62,7 +65,7 @@ function StoryCard({ member }: { member: any }) {
             style={{
               borderLeft: "4px solid transparent",
               borderRight: "4px solid transparent",
-              borderBottom: "5px solid #1A1A1A",
+              borderBottom: "5px solid #FBF5E6",
             }}
           />
           {bubbleText}
@@ -87,7 +90,7 @@ function ReactionButton({
     <button
       onClick={onClick}
       className="relative flex items-center gap-1 text-white text-xs font-bold px-3 py-1.5 rounded-full transition-all hover:opacity-80 active:scale-95"
-      style={{ background: "#1A1A1A" }}
+      style={{ background: NAVY }}
     >
       {emoji}
       {count > 0 && (
@@ -124,7 +127,6 @@ function PostCard({ post }: { post: any }) {
 
   const author = post.authorId;
   const proj = post.projectId;
-  const hasImage = !!post.imageUrl;
 
   const meetingId = post.meetingId?._id ?? post.meetingId;
   const targetUrl = proj?._id
@@ -133,108 +135,111 @@ function PostCard({ post }: { post: any }) {
     ? "/meetings"
     : null;
 
-  const cardContent = (
+  const headTitle = proj?.title ?? post.category;
+
+  const cardBody = (
     <>
-      {/* 헤더 */}
-      <div className="flex items-start justify-between mb-3">
-        <div>
-          <span className="font-bold text-yellow-600 text-sm">{author?.name}</span>
-          <span className="text-gray-500 text-xs ml-1">({author?.role})</span>
-          <p className="text-xs text-gray-400 mt-0.5">{post.category}</p>
-        </div>
-        {author?.statusMessage && (
+      {/* 상단: UpdateLog 배지 + 프로젝트명 ...... 게시글 제목(상태메세지 스타일) */}
+      <div className="flex items-start justify-between gap-4 px-6 pt-5 pb-3">
+        <div className="flex items-center gap-3 min-w-0">
           <span
-            className="text-xs px-3 py-1.5 rounded-lg text-gray-700 shrink-0 ml-3"
-            style={{ background: "rgba(0,0,0,0.06)", border: "1.5px solid #ccc" }}
+            className="shrink-0 text-[10px] font-bold tracking-wide px-2.5 py-1 rounded-md"
+            style={{ color: NAVY, border: `1.5px solid ${NAVY}` }}
           >
-            {author.statusMessage}
+            UpdateLog
           </span>
-        )}
+          <h3 className="font-bold text-lg truncate" style={{ color: NAVY }}>
+            {headTitle}
+          </h3>
+        </div>
+        <p className="shrink-0 text-xs italic max-w-[45%] truncate" style={{ color: "#8a7a52" }}>
+          {post.title}
+        </p>
       </div>
 
-      {/* 프로젝트 태그 */}
-      {proj && (
-        <div className="mb-3">
-          <span
-            className="inline-block text-xs font-bold px-4 py-2 rounded-lg"
-            style={{ background: "#fff", border: "2px solid #FF9999" }}
-          >
-            PROJECT: {proj.title}
-          </span>
+      {/* 구분선 — 골드 그라디언트 */}
+      <div className="h-[3px] mx-6" style={{ background: GOLD_GRADIENT }} />
+
+      {/* 본문: 이미지 | 텍스트 2단 */}
+      <div className="grid grid-cols-2 gap-4 px-6 py-4">
+        <div className="rounded-xl overflow-hidden h-56" style={{ background: "rgba(22,35,63,0.06)" }}>
+          {post.imageUrl ? (
+            <img src={post.imageUrl} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-xs" style={{ color: "#8a7a52" }}>
+              이미지 없음
+            </div>
+          )}
         </div>
-      )}
 
-      {/* 제목 */}
-      <h3 className="font-bold text-gray-900 text-sm mb-2">{post.title}</h3>
+        <div className="rounded-xl h-56 overflow-y-auto p-4" style={{ background: "rgba(22,35,63,0.03)" }}>
+          <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{post.content}</p>
 
-      {/* 본문 */}
-      <div className={`${hasImage ? "grid grid-cols-2 gap-4" : ""} mb-3`}>
-        {hasImage && (
-          <img
-            src={post.imageUrl}
-            alt=""
-            className="rounded-lg w-full h-32 object-cover border border-gray-200"
-          />
-        )}
-        <p className="text-sm text-gray-600 leading-relaxed line-clamp-4">{post.content}</p>
-      </div>
-
-      {/* 파일 첨부 */}
-      {post.attachments?.length > 0 && (
-        <div className="mb-3 space-y-1">
-          {post.attachments.map((att: any) => (
-            <span key={att.url} className="text-xs text-blue-500 flex items-center gap-1">
-              📎 {att.name}
-            </span>
-          ))}
+          {post.attachments?.length > 0 && (
+            <div className="mt-3 space-y-1">
+              {post.attachments.map((att: any) => (
+                <span key={att.url} className="text-xs text-blue-500 flex items-center gap-1">
+                  📎 {att.name}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
-      )}
-
-      {/* 메타데이터 */}
-      <div className="flex gap-4 text-xs text-gray-400 mb-3">
-        <span>조회 {post.viewCount ?? 0}</span>
-        <span>댓글 {post.commentCount ?? 0}</span>
-        <span className="ml-auto">{new Date(post.createdAt).toLocaleDateString("ko-KR")}</span>
       </div>
     </>
   );
 
   return (
-    <div className="relative">
-      <article
-        className="bg-white rounded-xl overflow-hidden"
-        style={{ border: "2px solid #FFD700", boxShadow: "0 4px 16px rgba(255,215,0,0.15)" }}
+    <article
+      className="bg-white rounded-2xl overflow-hidden"
+      style={{ border: `2px solid ${NAVY}`, boxShadow: "0 4px 20px rgba(191,149,63,0.25)" }}
+    >
+      {targetUrl ? (
+        <Link href={targetUrl} className="block hover:bg-[#16233F]/[0.02] transition-colors">
+          {cardBody}
+        </Link>
+      ) : (
+        cardBody
+      )}
+
+      {/* 하단: 작성자/시간 — 조회/댓글 배지 — 반응 버튼 */}
+      <div
+        className="flex items-center justify-between gap-4 px-6 py-4"
+        style={{ borderTop: "1.5px solid rgba(22,35,63,0.1)" }}
       >
+        <div className="text-xs leading-relaxed shrink-0">
+          <p className="font-semibold" style={{ color: NAVY }}>
+            게시자 : {author?.name} ({author?.role})
+          </p>
+          <p className="text-gray-400">
+            시간 : {new Date(post.createdAt).toLocaleDateString("ko-KR")}
+          </p>
+        </div>
+
         {targetUrl ? (
-          <Link href={targetUrl} className="block px-6 pt-6 pb-2 hover:bg-yellow-50/30 transition-colors">
-            {cardContent}
+          <Link
+            href={targetUrl}
+            className="text-xs font-semibold px-4 py-1.5 rounded-full transition-opacity hover:opacity-80 shrink-0"
+            style={{ border: "1.5px solid #AA771C", color: NAVY }}
+          >
+            조회수 : {post.viewCount ?? 0} &nbsp;&nbsp;댓글 : {post.commentCount ?? 0} &nbsp;&nbsp;댓글 달기 →
           </Link>
         ) : (
-          <div className="px-6 pt-6 pb-2">{cardContent}</div>
+          <span
+            className="text-xs font-semibold px-4 py-1.5 rounded-full shrink-0"
+            style={{ border: "1.5px solid #AA771C", color: NAVY }}
+          >
+            조회수 : {post.viewCount ?? 0} &nbsp;&nbsp;댓글 : {post.commentCount ?? 0}
+          </span>
         )}
 
-        <div className="flex gap-2 px-6 pb-5">
+        <div className="flex gap-2 shrink-0">
           <ReactionButton type="check" count={reactions.check} onClick={(e) => handleReaction(e, "check")} />
           <ReactionButton type="thumbsup" count={reactions.thumbsup} onClick={(e) => handleReaction(e, "thumbsup")} />
           <ReactionButton type="heart" count={reactions.heart} onClick={(e) => handleReaction(e, "heart")} />
-          {targetUrl && (
-            <Link
-              href={targetUrl}
-              className="ml-auto text-xs text-gray-400 hover:text-yellow-600 transition-colors self-center"
-            >
-              댓글 달기 →
-            </Link>
-          )}
         </div>
-      </article>
-
-      {proj && (
-        <div
-          className="absolute left-10 -bottom-[11px] w-5 h-5 bg-white rotate-45 pointer-events-none"
-          style={{ border: "2px solid #FFD700", borderTop: "none", borderLeft: "none" }}
-        />
-      )}
-    </div>
+      </div>
+    </article>
   );
 }
 
@@ -253,15 +258,20 @@ export default function HomeFeed({
   return (
     <div className="flex flex-col min-h-screen">
 
-      {/* ── 헤더 바 (전체 너비, 직사각형) ── */}
-      <div style={{ background: "linear-gradient(90deg, #FFD700 0%, #FFC300 100%)" }}>
+      {/* ── 헤더 바 (전체 너비, 실제 금박 질감의 골드 그라디언트) ── */}
+      <div
+        style={{
+          background:
+            "linear-gradient(135deg, #BF953F 0%, #FCF6BA 22%, #B38728 45%, #FBF5B7 68%, #AA771C 100%)",
+        }}
+      >
         {/* 메인 행: 타이틀 + 첫 N개 스토리 + 새 프로젝트 버튼 */}
         <div className="flex items-center gap-4 px-6 py-4">
-          <h2 className="text-base font-bold text-gray-900 shrink-0">최근 업데이트</h2>
+          <h2 className="text-base font-bold shrink-0" style={{ color: "#16233F" }}>최근 업데이트</h2>
 
           <div className="flex items-center gap-4 flex-1 min-w-0">
             {firstRow.length === 0 && (
-              <p className="text-xs text-gray-700">오늘 업데이트한 부원이 없습니다</p>
+              <p className="text-xs" style={{ color: "#16233F" }}>오늘 업데이트한 부원이 없습니다</p>
             )}
             {firstRow.map((m) => (
               <StoryCard key={m._id} member={m} />
@@ -287,8 +297,8 @@ export default function HomeFeed({
         )}
       </div>
 
-      {/* ── 포스트 피드 ── */}
-      <div className="max-w-2xl mx-auto w-full px-4 py-6 space-y-5">
+      {/* ── 포스트 피드 (꽉 찬 너비) ── */}
+      <div className="w-full px-8 py-6 space-y-6">
         {posts.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-gray-400 text-sm">아직 업데이트가 없습니다.</p>
