@@ -139,16 +139,22 @@ function PostCard({ post }: { post: any }) {
 
   const cardBody = (
     <>
-      {/* 상단: UpdateLog 배지 + 프로젝트명 ...... 게시글 제목(상태메세지 스타일) */}
+      {/* 상단: UpdateLog 배지 + 프로젝트명(일체형 박스) ...... 게시글 제목(상태메세지 스타일) */}
       <div className="flex items-start justify-between gap-4 px-6 pt-5 pb-3">
-        <div className="flex items-center gap-3 min-w-0">
+        <div
+          className="flex items-stretch min-w-0 rounded-lg overflow-hidden"
+          style={{ border: `2px solid ${NAVY}` }}
+        >
           <span
-            className="shrink-0 text-[10px] font-bold tracking-wide px-2.5 py-1 rounded-md"
-            style={{ color: NAVY, border: `1.5px solid ${NAVY}` }}
+            className="shrink-0 flex items-center text-sm font-bold tracking-wide px-3"
+            style={{ color: "#fff", background: NAVY }}
           >
             UpdateLog
           </span>
-          <h3 className="font-bold text-lg truncate" style={{ color: NAVY }}>
+          <h3
+            className="flex items-center font-bold text-lg truncate px-4"
+            style={{ color: NAVY }}
+          >
             {headTitle}
           </h3>
         </div>
