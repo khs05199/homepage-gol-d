@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
+import { Heart, MessageCircle, CheckCircle2 } from "lucide-react";
 
 const STORY_ROW_LIMIT = 8;
 const GOLD_GRADIENT =
@@ -75,29 +76,27 @@ function StoryCard({ member }: { member: any }) {
   );
 }
 
-// ── 반응 버튼 ──────────────────────────────────────────
-function ReactionButton({
-  type,
+// ── 반응 아이콘 버튼 (라인 스타일) ──────────────────────────────────────────
+function IconActionButton({
+  icon: Icon,
   count,
   onClick,
+  active,
 }: {
-  type: "check" | "thumbsup" | "heart";
-  count: number;
+  icon: typeof Heart;
+  count?: number;
   onClick: (e: React.MouseEvent) => void;
+  active?: boolean;
 }) {
-  const emoji = type === "check" ? "✓" : type === "thumbsup" ? "👍" : "❤️";
   return (
     <button
       onClick={onClick}
-      className="relative flex items-center gap-1 text-white text-xs font-bold px-3 py-1.5 rounded-full transition-all hover:opacity-80 active:scale-95"
-      style={{ background: NAVY }}
+      className="relative flex items-center gap-1 transition-transform hover:scale-110 active:scale-95"
+      style={{ color: NAVY }}
     >
-      {emoji}
-      {count > 0 && (
-        <span
-          className="absolute -top-2 -right-2 text-white text-[9px] font-bold w-[18px] h-[18px] rounded-full flex items-center justify-center"
-          style={{ background: "#0066CC" }}
-        >
+      <Icon size={22} strokeWidth={1.75} fill={active ? NAVY : "none"} />
+      {!!count && (
+        <span className="text-xs font-semibold" style={{ color: NAVY }}>
           {count}
         </span>
       )}
@@ -111,7 +110,7 @@ function PostCard({ post }: { post: any }) {
     post.reactions ?? { check: 0, thumbsup: 0, heart: 0 }
   );
 
-  async function handleReaction(e: React.MouseEvent, type: "check" | "thumbsup" | "heart") {
+  async function handleReaction(e: React.MouseEvent, type: "check" | "heart") {
     e.preventDefault();
     e.stopPropagation();
     const res = await fetch(`/api/posts/${post._id}/reactions`, {
@@ -122,6 +121,80 @@ function PostCard({ post }: { post: any }) {
     if (res.ok) {
       const data = await res.json();
       setReactions(data.reactions);
+    }
+  }
+
+  // ── 댓글 패널 ──
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<any[] | null>(null);
+  const [commentText, setCommentText] = useState("");
+  const [commentLoading, setCommentLoading] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [mentionUsers, setMentionUsers] = useState<any[] | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  async function toggleComments(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const next = !showComments;
+    setShowComments(next);
+    if (next && comments === null) {
+      const res = await fetch(`/api/posts/${post._id}/comments`);
+      if (res.ok) setComments(await res.json());
+    }
+  }
+
+  async function ensureMentionUsersLoaded() {
+    if (mentionUsers !== null) return;
+    const res = await fetch("/api/users");
+    if (res.ok) setMentionUsers(await res.json());
+  }
+
+  function handleCommentChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    const val = e.target.value;
+    setCommentText(val);
+    const caret = e.target.selectionStart ?? val.length;
+    const match = val.slice(0, caret).match(/@([^\s@]*)$/);
+    if (match) {
+      setMentionQuery(match[1]);
+      ensureMentionUsersLoaded();
+    } else {
+      setMentionQuery(null);
+    }
+  }
+
+  function selectMention(u: any) {
+    const caret = textareaRef.current?.selectionStart ?? commentText.length;
+    const before = commentText.slice(0, caret).replace(/@([^\s@]*)$/, `@${u.username ?? u.name} `);
+    const after = commentText.slice(caret);
+    setCommentText(before + after);
+    setMentionQuery(null);
+    textareaRef.current?.focus();
+  }
+
+  const mentionSuggestions =
+    mentionQuery !== null && mentionUsers
+      ? mentionUsers
+          .filter((u) =>
+            `${u.name ?? ""}${u.username ?? ""}`.toLowerCase().includes(mentionQuery.toLowerCase())
+          )
+          .slice(0, 6)
+      : [];
+
+  async function handleSubmitComment(e: React.FormEvent) {
+    e.preventDefault();
+    if (!commentText.trim()) return;
+    setCommentLoading(true);
+    const res = await fetch(`/api/posts/${post._id}/comments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: commentText }),
+    });
+    setCommentLoading(false);
+    if (res.ok) {
+      const newComment = await res.json();
+      setComments((prev) => [...(prev ?? []), newComment]);
+      setCommentText("");
     }
   }
 
@@ -196,56 +269,110 @@ function PostCard({ post }: { post: any }) {
   );
 
   return (
-    <article
-      className="bg-white rounded-2xl overflow-hidden"
-      style={{ border: `2px solid ${NAVY}`, boxShadow: "0 4px 20px rgba(191,149,63,0.25)" }}
-    >
-      {targetUrl ? (
-        <Link href={targetUrl} className="block hover:bg-[#16233F]/[0.02] transition-colors">
-          {cardBody}
-        </Link>
-      ) : (
-        cardBody
-      )}
-
-      {/* 하단: 작성자/시간 — 조회/댓글 배지 — 반응 버튼 */}
-      <div
-        className="flex items-center justify-between gap-4 px-6 py-4"
-        style={{ borderTop: "1.5px solid rgba(22,35,63,0.1)" }}
+    <div className="flex gap-4">
+      <article
+        className={`bg-white rounded-2xl overflow-hidden transition-all duration-300 ${
+          showComments ? "w-3/4" : "w-full"
+        }`}
+        style={{ border: `2px solid ${NAVY}`, boxShadow: "0 4px 20px rgba(191,149,63,0.25)" }}
       >
-        <div className="text-xs leading-relaxed shrink-0">
-          <p className="font-semibold" style={{ color: NAVY }}>
-            게시자 : {author?.name} ({author?.role})
-          </p>
-          <p className="text-gray-400">
-            시간 : {new Date(post.createdAt).toLocaleDateString("ko-KR")}
-          </p>
-        </div>
-
         {targetUrl ? (
-          <Link
-            href={targetUrl}
-            className="text-xs font-semibold px-4 py-1.5 rounded-full transition-opacity hover:opacity-80 shrink-0"
-            style={{ border: "1.5px solid #AA771C", color: NAVY }}
-          >
-            조회수 : {post.viewCount ?? 0} &nbsp;&nbsp;댓글 : {post.commentCount ?? 0} &nbsp;&nbsp;댓글 달기 →
+          <Link href={targetUrl} className="block hover:bg-[#16233F]/[0.02] transition-colors">
+            {cardBody}
           </Link>
         ) : (
-          <span
-            className="text-xs font-semibold px-4 py-1.5 rounded-full shrink-0"
-            style={{ border: "1.5px solid #AA771C", color: NAVY }}
-          >
-            조회수 : {post.viewCount ?? 0} &nbsp;&nbsp;댓글 : {post.commentCount ?? 0}
-          </span>
+          cardBody
         )}
 
-        <div className="flex gap-2 shrink-0">
-          <ReactionButton type="check" count={reactions.check} onClick={(e) => handleReaction(e, "check")} />
-          <ReactionButton type="thumbsup" count={reactions.thumbsup} onClick={(e) => handleReaction(e, "thumbsup")} />
-          <ReactionButton type="heart" count={reactions.heart} onClick={(e) => handleReaction(e, "heart")} />
+        {/* 하단: 작성자/시간 — 반응/댓글 아이콘 */}
+        <div
+          className="flex items-center justify-between gap-4 px-6 py-4"
+          style={{ borderTop: "1.5px solid rgba(22,35,63,0.1)" }}
+        >
+          <div className="text-xs leading-relaxed shrink-0">
+            <p className="font-semibold" style={{ color: NAVY }}>
+              게시자 : {author?.name} ({author?.role})
+            </p>
+            <p className="text-gray-400">
+              시간 : {new Date(post.createdAt).toLocaleDateString("ko-KR")}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-4 shrink-0">
+            <IconActionButton icon={Heart} count={reactions.heart} onClick={(e) => handleReaction(e, "heart")} />
+            <IconActionButton icon={MessageCircle} count={comments?.length ?? post.commentCount ?? 0} onClick={toggleComments} />
+            <IconActionButton icon={CheckCircle2} count={reactions.check} onClick={(e) => handleReaction(e, "check")} />
+          </div>
         </div>
+      </article>
+
+      {/* 댓글 패널 — 아이콘 클릭 시 오른쪽에서 슬라이드 인 */}
+      <div
+        className={`bg-white rounded-2xl transition-all duration-300 overflow-hidden ${
+          showComments ? "w-1/4 opacity-100" : "w-0 opacity-0"
+        }`}
+        style={{ border: showComments ? `2px solid ${NAVY}` : "none" }}
+      >
+        {showComments && (
+          <div className="flex flex-col h-full">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 max-h-[420px]">
+              {(comments ?? []).length === 0 && (
+                <p className="text-xs text-gray-400">첫 댓글을 남겨보세요.</p>
+              )}
+              {(comments ?? []).map((c) => (
+                <div key={c._id} className="text-xs">
+                  <span className="font-semibold" style={{ color: NAVY }}>
+                    {c.userId?.name}
+                  </span>
+                  <p className="text-gray-700 whitespace-pre-wrap">{c.content}</p>
+                </div>
+              ))}
+            </div>
+
+            <form
+              onSubmit={handleSubmitComment}
+              className="relative p-3"
+              style={{ borderTop: "1.5px solid rgba(22,35,63,0.1)" }}
+            >
+              {mentionSuggestions.length > 0 && (
+                <div
+                  className="absolute bottom-full left-3 right-3 mb-1 bg-white rounded-lg shadow-lg max-h-40 overflow-y-auto z-30"
+                  style={{ border: `1.5px solid ${NAVY}` }}
+                >
+                  {mentionSuggestions.map((u) => (
+                    <button
+                      key={u._id}
+                      type="button"
+                      onClick={() => selectMention(u)}
+                      className="w-full text-left px-3 py-1.5 text-xs hover:bg-gray-100"
+                    >
+                      @{u.username ?? u.name} <span className="text-gray-400">({u.name})</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <textarea
+                ref={textareaRef}
+                value={commentText}
+                onChange={handleCommentChange}
+                placeholder="댓글을 입력하세요 (@ 로 멘션)"
+                rows={2}
+                className="w-full text-xs rounded-lg p-2 resize-none"
+                style={{ border: "1.5px solid rgba(22,35,63,0.2)" }}
+              />
+              <button
+                type="submit"
+                disabled={commentLoading}
+                className="mt-2 text-xs font-semibold px-3 py-1 rounded-full"
+                style={{ background: NAVY, color: "#fff" }}
+              >
+                {commentLoading ? "등록 중..." : "등록"}
+              </button>
+            </form>
+          </div>
+        )}
       </div>
-    </article>
+    </div>
   );
 }
 
