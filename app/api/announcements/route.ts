@@ -4,7 +4,6 @@ import { connectDB } from "@/lib/mongodb";
 import Post from "@/models/Post";
 import { authOptions } from "@/lib/auth";
 import { isLeadership } from "@/lib/roles";
-import { sendEmailToAll } from "@/lib/sendEmail";
 
 export const dynamic = "force-dynamic";
 
@@ -40,14 +39,6 @@ export async function POST(req: NextRequest) {
   });
 
   const populated = await post.populate("authorId", "name avatar username role");
-
-  sendEmailToAll({
-    subject: `[GOL:D 공지] ${title}`,
-    authorName: (session.user as any).name ?? "운영진",
-    title,
-    content,
-    url: "/schedule",
-  }).catch(() => {});
 
   return NextResponse.json(populated, { status: 201 });
 }

@@ -4,7 +4,6 @@ import { connectDB } from "@/lib/mongodb";
 import Meeting from "@/models/Meeting";
 import Post from "@/models/Post";
 import { authOptions } from "@/lib/auth";
-import { sendEmailToAll } from "@/lib/sendEmail";
 
 export const dynamic = "force-dynamic";
 
@@ -76,14 +75,6 @@ export async function POST(req: NextRequest) {
   const populated = await Meeting.findById(meeting._id)
     .populate("participantIds", "name role")
     .lean();
-
-  sendEmailToAll({
-    subject: `[GOL:D 회의록] ${title}`,
-    authorName: (session.user as any).name ?? "운영진",
-    title,
-    content: notes ?? "",
-    url: "/meetings",
-  }).catch(() => {});
 
   return NextResponse.json(populated, { status: 201 });
 }

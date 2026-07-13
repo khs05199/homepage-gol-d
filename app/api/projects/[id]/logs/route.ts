@@ -4,7 +4,6 @@ import { connectDB } from "@/lib/mongodb";
 import Project from "@/models/Project";
 import Post from "@/models/Post";
 import { authOptions } from "@/lib/auth";
-import { sendEmailToAll } from "@/lib/sendEmail";
 
 export const dynamic = "force-dynamic";
 
@@ -55,14 +54,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   });
 
   const populated = await log.populate("authorId", "name avatar statusMessage");
-
-  sendEmailToAll({
-    subject: `[GOL:D 프로젝트] ${(populated.authorId as any)?.name ?? "부원"}님이 업데이트했습니다`,
-    authorName: (populated.authorId as any)?.name ?? "부원",
-    title,
-    content,
-    url: `/projects/${params.id}`,
-  }).catch(() => {});
 
   return NextResponse.json(populated, { status: 201 });
 }
