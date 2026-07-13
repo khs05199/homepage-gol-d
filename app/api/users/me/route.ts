@@ -22,7 +22,7 @@ export async function PATCH(req: NextRequest) {
 
   await connectDB();
   const body = await req.json();
-  const allowed = ["name", "statusMessage", "bio", "skills", "avatar"];
+  const allowed = ["name", "statusMessage", "bio", "skills", "avatar", "age", "grade"];
   const update: any = {};
   allowed.forEach((k) => { if (body[k] !== undefined) update[k] = body[k]; });
 

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import PageLayout from "@/components/PageLayout";
 
 export default function MyProfilePage() {
-  const [form, setForm] = useState({ name: "", statusMessage: "", bio: "", skills: "" });
+  const [form, setForm] = useState({ name: "", statusMessage: "", bio: "", skills: "", age: "", grade: "" });
   const [avatar, setAvatar] = useState("");
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,7 +17,14 @@ export default function MyProfilePage() {
     fetch("/api/users/me")
       .then((r) => r.json())
       .then((u) => {
-        setForm({ name: u.name ?? "", statusMessage: u.statusMessage ?? "", bio: u.bio ?? "", skills: (u.skills ?? []).join(", ") });
+        setForm({
+          name: u.name ?? "",
+          statusMessage: u.statusMessage ?? "",
+          bio: u.bio ?? "",
+          skills: (u.skills ?? []).join(", "),
+          age: u.age != null ? String(u.age) : "",
+          grade: u.grade ?? "",
+        });
         setAvatar(u.avatar ?? "");
         setUsername(u.username ?? "");
         setPortfolioSlug(u.portfolioSlug ?? "");
@@ -58,6 +65,8 @@ export default function MyProfilePage() {
         statusMessage: form.statusMessage,
         bio: form.bio,
         skills: form.skills.split(",").map((s) => s.trim()).filter(Boolean),
+        age: form.age ? Number(form.age) : null,
+        grade: form.grade,
       }),
     });
     setLoading(false);
@@ -142,6 +151,29 @@ export default function MyProfilePage() {
                 required
                 className={inputClass}
               />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">나이</label>
+                <input
+                  name="age"
+                  type="number"
+                  value={form.age}
+                  onChange={handleChange}
+                  placeholder="25"
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">재학 (학년-학기)</label>
+                <input
+                  name="grade"
+                  value={form.grade}
+                  onChange={handleChange}
+                  placeholder="4-2"
+                  className={inputClass}
+                />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">상태 메시지</label>

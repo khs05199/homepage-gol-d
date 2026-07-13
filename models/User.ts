@@ -10,6 +10,8 @@ const UserSchema = new Schema({
   avatar: { type: String, default: "" },
   bio: { type: String, default: "" },
   skills: [String],
+  age: { type: Number, default: null },
+  grade: { type: String, default: "" },
   portfolioSlug: { type: String, unique: true, sparse: true },
   createdAt: { type: Date, default: Date.now },
   lastSeen: { type: Date, default: null },
