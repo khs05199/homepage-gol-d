@@ -19,7 +19,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
 
-  const { content } = await req.json();
+  const { content, materialId } = await req.json();
   if (!content) {
     return NextResponse.json({ error: "내용은 필수입니다." }, { status: 400 });
   }
@@ -30,6 +30,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const comment = await Comment.create({
     postId: params.id,
+    materialId: materialId ?? null,
     userId: (session.user as any).id,
     content,
   });

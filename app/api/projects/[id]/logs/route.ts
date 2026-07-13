@@ -32,7 +32,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: "본인 프로젝트에만 로그를 추가할 수 있습니다." }, { status: 403 });
   }
 
-  const { title, content, imageUrl, attachments, postStatusMessage } = await req.json();
+  const { title, content, imageUrl, attachments, postStatusMessage, materials } = await req.json();
   if (!title || !content) {
     return NextResponse.json({ error: "제목과 내용은 필수입니다." }, { status: 400 });
   }
@@ -46,6 +46,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     postStatusMessage: postStatusMessage.slice(0, 15),
     imageUrl: imageUrl ?? undefined,
     attachments: attachments ?? [],
+    materials: Array.isArray(materials)
+      ? materials.filter((m: any) => m?.imageUrl || m?.text)
+      : [],
     category: "프로젝트",
     projectId: params.id,
     authorId: userId,

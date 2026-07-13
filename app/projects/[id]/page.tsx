@@ -7,6 +7,7 @@ import Post from "@/models/Post";
 import Comment from "@/models/Comment";
 import PageLayout from "@/components/PageLayout";
 import ProjectDetail from "@/components/ProjectDetail";
+import ThesisProjectDetail from "@/components/ThesisProjectDetail";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -27,6 +28,24 @@ export default async function ProjectPage({ params }: { params: { id: string } }
     .sort({ createdAt: -1 })
     .lean();
 
+  const currentUser = session
+    ? { id: (session.user as any).id, role: (session.user as any).role }
+    : null;
+
+  // 논문 프로젝트는 새로운 리모델링 디자인(ThesisProjectDetail) 사용.
+  // 개발/공모전은 각자 전용 페이지가 준비될 때까지 기존 디자인을 그대로 유지.
+  if ((project as any).type === "논문") {
+    return (
+      <PageLayout>
+        <ThesisProjectDetail
+          project={JSON.parse(JSON.stringify(project))}
+          logs={JSON.parse(JSON.stringify(logs))}
+          currentUser={currentUser}
+        />
+      </PageLayout>
+    );
+  }
+
   const postIds = logs.map((l: any) => l._id);
   const comments = await Comment.find({ postId: { $in: postIds } })
     .populate("userId", "name avatar portfolioSlug")
@@ -39,9 +58,7 @@ export default async function ProjectPage({ params }: { params: { id: string } }
         project={JSON.parse(JSON.stringify(project))}
         logs={JSON.parse(JSON.stringify(logs))}
         comments={JSON.parse(JSON.stringify(comments))}
-        currentUser={
-          session ? { id: (session.user as any).id, role: (session.user as any).role } : null
-        }
+        currentUser={currentUser}
       />
     </PageLayout>
   );

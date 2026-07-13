@@ -20,6 +20,10 @@ const PostSchema = new Schema({
     url: { type: String },
     type: { type: String },
   }],
+  materials: [{
+    imageUrl: { type: String },
+    text: { type: String },
+  }],
   viewCount: { type: Number, default: 0 },
   commentCount: { type: Number, default: 0 },
   reactions: {

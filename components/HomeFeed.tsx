@@ -3,11 +3,10 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { Heart, MessageCircle, CheckCircle2 } from "lucide-react";
+import { NAVY, GOLD_GRADIENT } from "@/lib/theme";
+import UpdateLogCard from "@/components/UpdateLogCard";
 
 const STORY_ROW_LIMIT = 8;
-const GOLD_GRADIENT =
-  "linear-gradient(135deg, #BF953F 0%, #FCF6BA 22%, #B38728 45%, #FBF5B7 68%, #AA771C 100%)";
-const NAVY = "#16233F";
 
 // ── 스토리 이동 링크 계산 ──────────────────────────────────────────
 function getStoryHref(member: any): string {
@@ -202,71 +201,18 @@ function PostCard({ post }: { post: any }) {
   const proj = post.projectId;
 
   const meetingId = post.meetingId?._id ?? post.meetingId;
+  // 논문 프로젝트 로그는 프로젝트 개요 없이 로그 상세 페이지로 바로 이동
   const targetUrl = proj?._id
-    ? `/projects/${proj._id}`
+    ? proj.type === "논문"
+      ? `/projects/${proj._id}/logs/${post._id}`
+      : `/projects/${proj._id}`
     : meetingId
     ? "/meetings"
     : null;
 
   const headTitle = proj?.title ?? post.category;
 
-  const cardBody = (
-    <>
-      {/* 상단: UpdateLog 배지 + 프로젝트명(일체형 박스) ...... 게시글 제목(상태메세지 스타일) */}
-      <div className="flex items-start justify-between gap-4 px-6 pt-5 pb-3">
-        <div
-          className="flex items-stretch min-w-0 rounded-lg overflow-hidden"
-          style={{ border: `2px solid ${NAVY}` }}
-        >
-          <span
-            className="shrink-0 flex items-center text-sm font-bold tracking-wide px-3"
-            style={{ color: "#fff", background: NAVY }}
-          >
-            UpdateLog
-          </span>
-          <h3
-            className="flex items-center font-bold text-lg truncate px-4"
-            style={{ color: NAVY }}
-          >
-            {headTitle}
-          </h3>
-        </div>
-        <p className="shrink-0 text-xs italic max-w-[45%] truncate" style={{ color: "#8a7a52" }}>
-          {post.title}
-        </p>
-      </div>
-
-      {/* 구분선 — 골드 그라디언트 */}
-      <div className="h-[3px] mx-6" style={{ background: GOLD_GRADIENT }} />
-
-      {/* 본문: 이미지 | 텍스트 2단 */}
-      <div className="grid grid-cols-2 gap-4 px-6 py-4">
-        <div className="rounded-xl overflow-hidden h-56" style={{ background: "rgba(22,35,63,0.06)" }}>
-          {post.imageUrl ? (
-            <img src={post.imageUrl} alt="" className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-xs" style={{ color: "#8a7a52" }}>
-              이미지 없음
-            </div>
-          )}
-        </div>
-
-        <div className="rounded-xl h-56 overflow-y-auto p-4" style={{ background: "rgba(22,35,63,0.03)" }}>
-          <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{post.content}</p>
-
-          {post.attachments?.length > 0 && (
-            <div className="mt-3 space-y-1">
-              {post.attachments.map((att: any) => (
-                <span key={att.url} className="text-xs text-blue-500 flex items-center gap-1">
-                  📎 {att.name}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </>
-  );
+  const cardBody = <UpdateLogCard post={post} headTitle={headTitle} />;
 
   return (
     <div className="flex gap-4">
@@ -319,14 +265,33 @@ function PostCard({ post }: { post: any }) {
               {(comments ?? []).length === 0 && (
                 <p className="text-xs text-gray-400">첫 댓글을 남겨보세요.</p>
               )}
-              {(comments ?? []).map((c) => (
-                <div key={c._id} className="text-xs">
-                  <span className="font-semibold" style={{ color: NAVY }}>
-                    {c.userId?.name}
-                  </span>
-                  <p className="text-gray-700 whitespace-pre-wrap">{c.content}</p>
-                </div>
-              ))}
+              {(comments ?? []).map((c) => {
+                // 로그 상세 페이지가 있는 댓글은 클릭 시 해당 자료 위치로 이동
+                const commentHref = targetUrl?.includes("/logs/")
+                  ? `${targetUrl}#material-${c.materialId ?? "main"}`
+                  : null;
+                const body = (
+                  <>
+                    <span className="font-semibold" style={{ color: NAVY }}>
+                      {c.userId?.name}
+                    </span>
+                    <p className="text-gray-700 whitespace-pre-wrap">{c.content}</p>
+                  </>
+                );
+                return commentHref ? (
+                  <Link
+                    key={c._id}
+                    href={commentHref}
+                    className="block text-xs -mx-1 px-1 py-0.5 rounded-md hover:bg-[#16233F]/5 transition-colors"
+                  >
+                    {body}
+                  </Link>
+                ) : (
+                  <div key={c._id} className="text-xs">
+                    {body}
+                  </div>
+                );
+              })}
             </div>
 
             <form
@@ -394,17 +359,16 @@ export default function HomeFeed({
       {/* ── 헤더 바 (전체 너비, 실제 금박 질감의 골드 그라디언트) ── */}
       <div
         style={{
-          background:
-            "linear-gradient(135deg, #BF953F 0%, #FCF6BA 22%, #B38728 45%, #FBF5B7 68%, #AA771C 100%)",
+          background: GOLD_GRADIENT,
         }}
       >
         {/* 메인 행: 타이틀 + 첫 N개 스토리 + 새 프로젝트 버튼 */}
         <div className="flex items-center gap-4 px-6 py-4">
-          <h2 className="text-base font-bold shrink-0" style={{ color: "#16233F" }}>최근 업데이트</h2>
+          <h2 className="text-base font-bold shrink-0" style={{ color: NAVY }}>최근 업데이트</h2>
 
           <div className="flex items-center gap-4 flex-1 min-w-0">
             {firstRow.length === 0 && (
-              <p className="text-xs" style={{ color: "#16233F" }}>오늘 업데이트한 부원이 없습니다</p>
+              <p className="text-xs" style={{ color: NAVY }}>오늘 업데이트한 부원이 없습니다</p>
             )}
             {firstRow.map((m) => (
               <StoryCard key={m._id} member={m} />
