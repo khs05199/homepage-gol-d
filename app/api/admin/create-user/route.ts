@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import { authOptions } from "@/lib/auth";
+import { sendPushToAll } from "@/lib/sendPush";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,16 @@ export async function POST(req: NextRequest) {
     role: validRoles.includes(newRole) ? newRole : "부원",
     portfolioSlug: slug,
   });
+
+  sendPushToAll(
+    {
+      title: "새로운 부원 가입",
+      body: `${name}님이 합류했습니다`,
+      url: "/members",
+      tag: "new-member",
+    },
+    (session?.user as any)?.id
+  ).catch(() => {});
 
   return NextResponse.json({ id: user._id, name: user.name, email: user.email });
 }

@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/mongodb";
 import Project from "@/models/Project";
 import Post from "@/models/Post";
 import { authOptions } from "@/lib/auth";
+import { sendPushToAll } from "@/lib/sendPush";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +55,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   });
 
   const populated = await log.populate("authorId", "name avatar statusMessage");
+
+  sendPushToAll(
+    {
+      title: `${project.title} 업데이트`,
+      body: title,
+      url: project.type === "논문" ? `/projects/${params.id}/logs/${log._id}` : `/projects/${params.id}`,
+      tag: "project-log",
+    },
+    userId
+  ).catch(() => {});
 
   return NextResponse.json(populated, { status: 201 });
 }

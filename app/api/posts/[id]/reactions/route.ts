@@ -4,6 +4,13 @@ import { connectDB } from "@/lib/mongodb";
 import Post from "@/models/Post";
 import Reaction from "@/models/Reaction";
 import { authOptions } from "@/lib/auth";
+import { sendPushToUsers } from "@/lib/sendPush";
+
+const REACTION_LABEL: Record<string, string> = {
+  check: "체크",
+  thumbsup: "좋아요",
+  heart: "하트",
+};
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +43,28 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       params.id,
       { $inc: { [field]: 1 } },
       { new: true }
-    ).select("reactions");
+    )
+      .select("reactions authorId projectId meetingId")
+      .populate("projectId", "type");
+
+    if (post && post.authorId?.toString() !== userId) {
+      const proj = post.projectId as any;
+      const url = proj?._id
+        ? proj.type === "논문"
+          ? `/projects/${proj._id}/logs/${post._id}`
+          : `/projects/${proj._id}`
+        : post.meetingId
+        ? "/meetings"
+        : "/";
+
+      sendPushToUsers([post.authorId.toString()], {
+        title: "새 반응",
+        body: `${(session.user as any).name ?? "누군가"}님이 ${REACTION_LABEL[reactionType]} 반응을 남겼습니다`,
+        url,
+        tag: "reaction",
+      }).catch(() => {});
+    }
+
     return NextResponse.json({ action: "added", reactions: post?.reactions });
   }
 }

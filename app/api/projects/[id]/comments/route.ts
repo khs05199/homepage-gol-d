@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/mongodb";
 import Post from "@/models/Post";
 import Comment from "@/models/Comment";
 import { authOptions } from "@/lib/auth";
+import { sendPushToUsers } from "@/lib/sendPush";
 
 export const dynamic = "force-dynamic";
 
@@ -30,14 +31,26 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const post = await Post.findOne({ _id: postId, projectId: params.id });
   if (!post) return NextResponse.json({ error: "게시글을 찾을 수 없습니다." }, { status: 404 });
 
+  const userId = (session.user as any).id;
+
   const comment = await Comment.create({
     postId,
-    userId: (session.user as any).id,
+    userId,
     content,
   });
 
   await Post.findByIdAndUpdate(postId, { $inc: { commentCount: 1 } });
 
   const populated = await comment.populate("userId", "name avatar portfolioSlug");
+
+  if (post.authorId?.toString() !== userId) {
+    sendPushToUsers([post.authorId.toString()], {
+      title: "새 댓글",
+      body: `${(session.user as any).name ?? "누군가"}님이 댓글을 남겼습니다: ${content.slice(0, 40)}`,
+      url: `/projects/${params.id}`,
+      tag: "comment",
+    }).catch(() => {});
+  }
+
   return NextResponse.json(populated, { status: 201 });
 }

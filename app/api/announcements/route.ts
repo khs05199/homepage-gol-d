@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/mongodb";
 import Post from "@/models/Post";
 import { authOptions } from "@/lib/auth";
 import { isLeadership } from "@/lib/roles";
+import { sendPushToAll } from "@/lib/sendPush";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +40,16 @@ export async function POST(req: NextRequest) {
   });
 
   const populated = await post.populate("authorId", "name avatar username role");
+
+  sendPushToAll(
+    {
+      title: "새 공지사항",
+      body: title,
+      url: "/schedule",
+      tag: "announcement",
+    },
+    (session.user as any).id
+  ).catch(() => {});
 
   return NextResponse.json(populated, { status: 201 });
 }

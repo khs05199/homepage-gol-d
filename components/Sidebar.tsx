@@ -10,6 +10,7 @@ import {
   LogOut, KeyRound, FileText,
 } from "lucide-react";
 import OnlineCount from "./OnlineCount";
+import NotificationToggle from "./NotificationToggle";
 
 const NAV_TOP = [
   { href: "/", label: "대시보드", icon: LayoutDashboard },
@@ -159,6 +160,9 @@ export default function Sidebar() {
           );
         })}
       </nav>
+
+      {/* 알림 */}
+      <NotificationToggle />
 
       {/* 실시간 접속자 */}
       <OnlineCount />
