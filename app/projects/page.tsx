@@ -1,5 +1,6 @@
 import { connectDB } from "@/lib/mongodb";
 import Project from "@/models/Project";
+import "@/models/User";
 import PageLayout from "@/components/PageLayout";
 
 export const dynamic = "force-dynamic";

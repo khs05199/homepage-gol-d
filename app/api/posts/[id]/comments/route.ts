@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { connectDB } from "@/lib/mongodb";
 import Post from "@/models/Post";
 import Comment from "@/models/Comment";
+import "@/models/User";
+import "@/models/Project";
 import { authOptions } from "@/lib/auth";
 import { sendPushToUsers } from "@/lib/sendPush";
 

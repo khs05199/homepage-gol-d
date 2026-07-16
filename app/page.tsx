@@ -5,6 +5,7 @@ import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import Post from "@/models/Post";
 import "@/models/Project";
+import "@/models/Meeting";
 import PageLayout from "@/components/PageLayout";
 import HomeFeed from "@/components/HomeFeed";
 
