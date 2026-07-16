@@ -53,6 +53,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       title: `[회의록] ${(meeting as any).title}`,
       content: (update.notes as string) ?? (meeting as any).notes ?? "",
       postStatusMessage: "회의록 업데이트",
+      imageUrl: (meeting as any).imageUrl ?? "",
       createdAt: new Date(),
     });
   } else {
@@ -60,6 +61,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       title: `[회의록] ${(meeting as any).title}`,
       content: (update.notes as string) ?? (meeting as any).notes ?? "",
       postStatusMessage: "회의록 업데이트",
+      imageUrl: (meeting as any).imageUrl ?? "",
       category: "회의",
       meetingId: params.id,
       authorId: (session.user as any).id,

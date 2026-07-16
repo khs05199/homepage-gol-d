@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
 
   await connectDB();
-  const { title, content, postStatusMessage } = await req.json();
+  const { title, content, postStatusMessage, imageUrl } = await req.json();
   if (!title || !content)
     return NextResponse.json({ error: "제목과 내용은 필수입니다." }, { status: 400 });
   if (!postStatusMessage?.trim())
@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
     title,
     content,
     postStatusMessage: postStatusMessage.slice(0, 15),
+    imageUrl: imageUrl ?? "",
     category: "공지",
     authorId: (session.user as any).id,
   });

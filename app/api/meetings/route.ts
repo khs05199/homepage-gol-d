@@ -67,6 +67,7 @@ export async function POST(req: NextRequest) {
     title: `[회의록] ${title}`,
     content: notes ?? "",
     postStatusMessage: "회의록 업데이트",
+    imageUrl: imageUrl ?? "",
     category: "회의",
     meetingId: meeting._id,
     authorId: (session.user as any).id,
